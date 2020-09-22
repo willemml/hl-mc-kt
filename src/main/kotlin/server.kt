@@ -6,6 +6,7 @@ import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import kotlinx.html.*
+import protocol.Stack
 
 fun HTML.index() {
     head {
@@ -26,4 +27,5 @@ fun main() {
             }
         }
     }.start(wait = true)
+    Stack.serializer()
 }
