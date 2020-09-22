@@ -2,52 +2,161 @@ package protocol
 
 import io.netty.buffer.ByteBuf
 
-data class Tag(val content: Any? = null) {
+class Tag(val type: Int = 0) {
+    private val emptyArrayList = ArrayList<Tag>()
+    private val emptyHashMap = HashMap<String, Tag>()
+    var content: Any? = null
+
     fun writeToBuffer(buffer: ByteBuf) {
-        when (content) {
-            null -> return
-            is Byte -> buffer.writeByte(content.toInt())
-            is Short -> buffer.writeShort(content.toInt())
-            is Int -> buffer.writeShort(content)
-            is Long -> buffer.writeShort(content.toInt())
-            is Float -> buffer.writeShort(content.toInt())
-            is Double -> buffer.writeShort(content.toInt())
-            is ByteArray -> buffer.writeBytes(content)
-            is String -> buffer.writeCharSequence(content, Charsets.UTF_8)
-            is List<*> -> {
-                if (content.isNotEmpty()) {
-                    when (content[0]) {
-                        is Int -> {
-                            content.forEach { buffer.writeInt(it as Int) }
-                        }
-                        is Double -> {
-                            content.forEach { buffer.writeInt((it as Double).toInt()) }
-                        }
-                         is List<*> -> {
-                            if ((content[0] as List<*>).isNotEmpty()) {
-                                if ((content[0] as List<*>)[0] is Tag) {
-                                    (content as List<List<Tag>>).forEach { it.forEach { it.writeToBuffer(buffer) } }
-                                    return
-                                }
-                            }
-                            buffer.writeByte(0)
-                        }
-                    }
+        when (type) {
+            0 -> return
+            1 -> buffer.writeByte((content as Byte).toInt())
+            2 -> buffer.writeShort((content as Short).toInt())
+            3 -> buffer.writeShort(content as Int)
+            4 -> buffer.writeLong(content as Long)
+            5 -> buffer.writeFloat(content as Float)
+            6 -> buffer.writeDouble(content as Double)
+            7 -> {
+                buffer.writeInt((content as ByteArray).size)
+                buffer.writeBytes(content as ByteArray)
+            }
+            8 -> buffer.writeString(content as String)
+            9 -> {
+                if ((content as ArrayList<Tag>).isEmpty()) {
+                    buffer.writeByte(0)
+                    buffer.writeInt(0)
+                }
+                else {
+                    buffer.writeByte(internalID())
+                    buffer.writeInt((content as ArrayList<Tag>).size)
+                    (content as ArrayList<Tag>).forEach { it.writeToBuffer(buffer) }
                 }
             }
-            is Map<*, *> -> {
-                if (content.isNotEmpty()) {
-                    if (content.keys.first() is String && content.values.first() is Tag) {
-                        content.forEach {
-                            buffer.writeCharSequence(it.key as String, Charsets.UTF_8)
-                            (it.value as Tag).writeToBuffer(buffer)
-                        }
-                    }
+            10 -> {
+                (content as HashMap<String, Tag>).forEach {
+                    buffer.writeByte(it.value.internalID())
+                    buffer.writeString(it.key)
+                    (it.value).writeToBuffer(buffer)
                 }
                 buffer.writeByte(0)
             }
+            11 -> {
+                buffer.writeInt((content as IntArray).size)
+                (content as IntArray).forEach { buffer.writeInt(it) }
+            }
+            12 -> {
+                buffer.writeInt((content as LongArray).size)
+                (content as LongArray).forEach { buffer.writeLong(it) }
+            }
         }
+    }
+
+    fun readFromBuffer(buffer: ByteBuf) {
+        content = when (internalID()) {
+            1 -> buffer.readByte()
+            2 -> buffer.readShort()
+            3 -> buffer.readInt()
+            4 -> buffer.readLong()
+            5 -> buffer.readFloat()
+            6 -> buffer.readDouble()
+            7 -> buffer.readBytes(buffer.readInt())
+            8 -> buffer.readString()
+            9 -> {
+                val newList = ArrayList<Tag>()
+                val readType = buffer.readByte().toInt()
+                val length = buffer.readInt()
+                if (readType != 0 && length != 0) {
+                    val newTag = Tag(readType)
+                    newTag.readFromBuffer(buffer)
+                    newList.add(newTag)
+                }
+                newList
+            }
+            10 -> {
+                val newHashMap = HashMap<String, Tag>()
+                val readType = buffer.readByte().toInt()
+                var nextByte = buffer.readByte()
+                while (nextByte.toInt() != 0) {
+                    val key = buffer.readString(nextByte)
+                    val value = Tag(readType)
+                    value.readFromBuffer(buffer)
+                    newHashMap[key] = value
+                    nextByte = buffer.readByte()
+                }
+            }
+            11 -> {
+                val size = buffer.readInt()
+                var intArray = IntArray(size)
+                for (i in (intArray.indices)) {
+                    intArray[i] = buffer.readInt()
+                }
+                intArray
+            }
+            12 -> {
+                val size = buffer.readInt()
+                var longArray = LongArray(size)
+                for (i in (longArray.indices)) {
+                    longArray[i] = buffer.readLong()
+                }
+                longArray
+            }
+            else -> null
+        }
+    }
+
+    fun internalID(): Int {
+        return when (content) {
+            is Byte -> 1
+            is Short -> 2
+            is Int -> 3
+            is Long -> 4
+            is Float -> 5
+            is Double -> 6
+            is ByteArray -> 7
+            is String -> 8
+            isList() -> 9
+            isMap() -> 10
+            is IntArray -> 11
+            is LongArray -> 12
+            else -> 0
+        }
+    }
+
+    private fun isList(): Boolean {
+        if (content is ArrayList<*>) {
+            val contentCopy = content as ArrayList<*>
+            contentCopy.clear()
+            if (contentCopy == emptyArrayList) {
+                return true
+            }
+        }
+        return false
+    }
+
+    private fun isMap(): Boolean {
+        if (content is HashMap<*, *>) {
+            val contentCopy = content as HashMap<*, *>
+            contentCopy.clear()
+            if (contentCopy == emptyHashMap) {
+                return true
+            }
+        }
+        return false
     }
 }
 
 data class NamedTag(var name: String, var tag: Tag)
+
+fun ByteBuf.writeString(string: String) {
+    val bytes = string.toByteArray(Charsets.UTF_8)
+    this.writeShort(bytes.size)
+    this.writeBytes(bytes)
+}
+
+fun ByteBuf.readString(first: Byte? = null): String {
+    var bytes = readBytes(readShort().toInt()).array()
+    if (first != null) {
+        bytes = byteArrayOf(first).plus(bytes)
+    }
+    return bytes.toString(Charsets.UTF_8)
+}
