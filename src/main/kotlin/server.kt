@@ -9,11 +9,11 @@ import kotlinx.html.*
 
 fun HTML.index() {
     head {
-        title("Hello from Ktor!")
+        title("hl-mc-kt!")
     }
     body {
         div {
-            +"Hello from Ktor"
+            +"Hello from Ktor in hl-mc-kt!"
         }
     }
 }
