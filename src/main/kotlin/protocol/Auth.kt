@@ -3,14 +3,24 @@ package protocol
 import io.ktor.client.*
 import io.ktor.client.engine.apache.*
 import io.ktor.client.features.json.*
+import io.ktor.client.features.logging.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 
-val client = HttpClient(Apache) {
-    install(JsonFeature) {
-        serializer = JacksonSerializer()
+inline fun singleUseClient(run: (HttpClient) -> Any): Any {
+    val client = HttpClient(Apache) {
+        install(JsonFeature) {
+            serializer = JacksonSerializer()
+        }
+        install(Logging) {
+            logger = Logger.SIMPLE
+            level = LogLevel.ALL
+        }
     }
+    val invoke = run.invoke(client)
+    client.close()
+    return invoke
 }
 
 enum class URLs(val url: String) {
@@ -22,30 +32,38 @@ enum class URLs(val url: String) {
 }
 
 suspend fun login(username: String, password: String): Profile {
-    return client.post {
-        url(URLs.Login.url)
-        body = LoginRequest(username, password)
-    }
+    return singleUseClient { client ->
+        client.post {
+            url(URLs.Login.url)
+            body = LoginRequest(username, password)
+        }
+    } as Profile
 }
 
 suspend fun refresh(profile: Profile): Profile {
-    profile.accessToken = client.post<Profile> {
-        url(URLs.Refresh.url)
-        body = Refresh(profile.accessToken, profile.clientToken)
-    }.accessToken
+    profile.accessToken = singleUseClient { client ->
+        client.post<Profile> {
+            url(URLs.Refresh.url)
+            body = Refresh(profile.accessToken, profile.clientToken)
+        }.accessToken
+    } as String
     return profile
 }
 
 suspend fun validate(profile: Profile): Boolean {
-    return client.post<HttpResponse> {
-        url(URLs.Validate.url)
-        body = Validate(profile.accessToken, profile.clientToken)
-    }.status == HttpStatusCode.NoContent
+    return singleUseClient { client ->
+        return client.post<HttpResponse> {
+            url(URLs.Validate.url)
+            body = Validate(profile.accessToken, profile.clientToken)
+        }.status == HttpStatusCode.NoContent
+    } as Boolean
 }
 
 suspend fun signOut(username: String, password: String) {
-    client.post<HttpResponse> {
-        url(URLs.SignOut.url)
-        body = SignOut(username, password)
+    singleUseClient { client ->
+        client.post<HttpResponse> {
+            url(URLs.SignOut.url)
+            body = SignOut(username, password)
+        }
     }
 }

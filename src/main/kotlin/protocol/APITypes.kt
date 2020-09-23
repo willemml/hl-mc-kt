@@ -43,7 +43,7 @@ data class Profile(
     var accessToken: String = "",
     val clientToken: String = "",
     val availableProfiles: Array<UserProfile>? = null,
-    val selectedProfile: Array<UserProfile>? = null,
+    val selectedProfile: UserProfile,
     val user: AccountProfile? = null
 )
 
