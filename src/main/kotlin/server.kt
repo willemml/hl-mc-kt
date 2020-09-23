@@ -27,5 +27,4 @@ fun main() {
             }
         }
     }.start(wait = true)
-    Stack.serializer()
 }
