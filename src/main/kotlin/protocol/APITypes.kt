@@ -2,22 +2,49 @@ package protocol
 
 import randomAlphanumeric
 
-data class Login(
-    val username: String,
-    val password: String,
+data class LoginRequest(
+    val username: String = "",
+    val password: String = "",
     val clientToken: String = randomAlphanumeric(32),
     val agent: Agent = Agent(),
     val requestUser: Boolean = false
 )
 
-data class Agent(val name: String = "Minecraft", val version: Int = 1)
+data class SignOut(
+    val username: String = "",
+    val password: String = ""
+)
 
-data class LoginResponse(
+data class Validate(
+    val accessToken: String = "",
+    val clientToken: String = ""
+)
+
+data class Refresh(
     val accessToken: String = "",
     val clientToken: String = "",
-    val availableProfiles: Array<UserProfile> = emptyArray(),
-    val selectedProfile: Array<UserProfile> = emptyArray(),
-    val user: AccountProfile = AccountProfile()
+    val selectedProfile: Array<UserProfile>? = null,
+    val requestUser: Boolean = false
+)
+
+data class RefreshResponse(
+    val accessToken: String = "",
+    val clientToken: String = "",
+    val selectedProfile: Array<UserProfile>? = null,
+    val user: AccountProfile? = null
+)
+
+data class Agent(
+    val name: String = "Minecraft",
+    val version: Int = 1
+)
+
+data class Profile(
+    var accessToken: String = "",
+    val clientToken: String = "",
+    val availableProfiles: Array<UserProfile>? = null,
+    val selectedProfile: Array<UserProfile>? = null,
+    val user: AccountProfile? = null
 )
 
 data class UserProfile(
@@ -49,7 +76,10 @@ data class AccountProfile(
     val emailVerified: Boolean = false,
     val legacyUser: Boolean = false,
     val verifiedByParent: Boolean = false,
-    val properties: Array<Property> = emptyArray()
+    val properties: Array<Property>? = null
 )
 
-data class Property(val name: String = "", val value: String = "")
+data class Property(
+    val name: String = "",
+    val value: String = ""
+)
