@@ -1,4 +1,4 @@
-package protocol
+package mojang
 
 import io.ktor.client.*
 import io.ktor.client.engine.apache.*

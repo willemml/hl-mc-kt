@@ -1,160 +1,618 @@
+// file from https://gist.github.com/camdenorrb/bec73c5608267f0232bd8f5c42e0784d
+
+/*
+MIT License
+
+Copyright (c) 2020 Camden B
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
+// package me.camdenorrb.afancehmcserverimpl.nmc
+
 package protocol
 
-import io.netty.buffer.ByteBuf
+import java.io.*
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.util.zip.DeflaterInputStream
+import java.util.zip.DeflaterOutputStream
+import java.util.zip.GZIPInputStream
+import java.util.zip.GZIPOutputStream
 
-class Tag(private val type: Int = 0) {
-    private val emptyArrayList = ArrayList<Tag>()
-    private val emptyHashMap = HashMap<String, Tag>()
-    private var content: Any? = null
+// TODO: Add coroutine support
+class NBT(
+    val name: String,
+    map: Map<String, Any>,
+    internal val listIDs: MutableMap<String, Int> = mutableMapOf()
+) {
 
-    fun writeToBuffer(buffer: ByteBuf) {
-        when (type) {
-            0 -> return
-            1 -> buffer.writeByte((content as Byte).toInt())
-            2 -> buffer.writeShort((content as Short).toInt())
-            3 -> buffer.writeShort(content as Int)
-            4 -> buffer.writeLong(content as Long)
-            5 -> buffer.writeFloat(content as Float)
-            6 -> buffer.writeDouble(content as Double)
-            7 -> {
-                buffer.writeInt((content as ByteArray).size)
-                buffer.writeBytes(content as ByteArray)
-            }
-            8 -> buffer.writeString(content as String)
-            9 -> {
-                if ((content as ArrayList<*>).isEmpty()) {
-                    buffer.writeByte(0)
-                    buffer.writeInt(0)
-                }
-                else {
-                    buffer.writeByte(internalID())
-                    buffer.writeInt((content as ArrayList<*>).size)
-                    (content as ArrayList<*>).forEach { (it as Tag).writeToBuffer(buffer) }
-                }
-            }
-            10 -> {
-                (content as HashMap<*, *>).forEach {
-                    buffer.writeByte((it.value as Tag).internalID())
-                    buffer.writeString(it.key as String)
-                    (it.value as Tag).writeToBuffer(buffer)
-                }
-                buffer.writeByte(0)
-            }
-            11 -> {
-                buffer.writeInt((content as IntArray).size)
-                (content as IntArray).forEach { buffer.writeInt(it) }
-            }
-            12 -> {
-                buffer.writeInt((content as LongArray).size)
-                (content as LongArray).forEach { buffer.writeLong(it) }
-            }
+    internal val map = map.toMutableMap()
+
+
+    operator fun <T> invoke(key: String): Lazy<T> {
+        return lazy { get(key) }
+    }
+
+    fun <T> get(key: String): T {
+        return map[key] as T
+    }
+
+
+    fun pushZlib(output: File, endianness: ByteOrder = ByteOrder.BIG_ENDIAN) {
+        push(StreamedOutput(DataOutputStream(DeflaterOutputStream(output.outputStream().buffered())), endianness))
+    }
+
+    fun pushGzip(output: File, endianness: ByteOrder = ByteOrder.BIG_ENDIAN) {
+        push(StreamedOutput(DataOutputStream(GZIPOutputStream(output.outputStream().buffered())), endianness))
+    }
+
+    fun push(output: File, endianness: ByteOrder = ByteOrder.BIG_ENDIAN) {
+
+        output.parentFile?.mkdirs()
+        output.createNewFile()
+
+        push(output.outputStream(), endianness)
+    }
+
+    fun push(output: DataOutputStream, endianness: ByteOrder = ByteOrder.BIG_ENDIAN) {
+
+        val nbtSize = getNBTSize()
+        val byteBuffer = ByteBuffer.allocateDirect(nbtSize).apply { order(endianness) }
+
+        push(byteBuffer)
+
+        val bytes = ByteArray(nbtSize).apply {
+            byteBuffer.get(0, this)
+        }
+
+        output.write(bytes)
+    }
+
+    fun push(output: FileOutputStream, endianness: ByteOrder = ByteOrder.BIG_ENDIAN) {
+
+        val byteBuffer = ByteBuffer.allocateDirect(getNBTSize()).apply { order(endianness) }
+        push(byteBuffer)
+
+        byteBuffer.position(0)
+
+        output.channel.write(byteBuffer)
+    }
+
+    fun push(output: ByteBuffer) {
+        push(ByteBufferOutput(output))
+    }
+
+    fun push(output: Output) {
+        if (output is AutoCloseable) {
+            output.use { write(output, name, this) }
+        }
+        else {
+            write(output, name, this)
         }
     }
 
-    fun readFromBuffer(buffer: ByteBuf) {
-        content = when (internalID()) {
-            1 -> buffer.readByte()
-            2 -> buffer.readShort()
-            3 -> buffer.readInt()
-            4 -> buffer.readLong()
-            5 -> buffer.readFloat()
-            6 -> buffer.readDouble()
-            7 -> buffer.readBytes(buffer.readInt())
-            8 -> buffer.readString()
-            9 -> {
-                val newList = ArrayList<Tag>()
-                val readType = buffer.readByte().toInt()
-                val length = buffer.readInt()
-                if (readType != 0 && length != 0) {
-                    val newTag = Tag(readType)
-                    newTag.readFromBuffer(buffer)
-                    newList.add(newTag)
-                }
-                newList
+    // Gets the total amount of bytes needed to serialize this
+    fun getNBTSize(): Int {
+        return getTagSize(name, this)
+    }
+
+
+    override fun toString(): String {
+
+        return map.entries.joinToString("\n", "{\n", "\n}") { (name, value) ->
+
+            val valueText = when (value) {
+                is IntArray  -> value.contentToString()
+                is ByteArray -> value.contentToString()
+                is LongArray -> value.contentToString()
+                is String  -> "\"$value\""
+                is List<*> -> "\n${"$value".prependIndent("  ")}"
+                else -> "$value"
             }
-            10 -> {
-                val newHashMap = HashMap<String, Tag>()
-                val readType = buffer.readByte().toInt()
-                var nextByte = buffer.readByte()
-                while (nextByte.toInt() != 0) {
-                    val key = buffer.readString(nextByte)
-                    val value = Tag(readType)
-                    value.readFromBuffer(buffer)
-                    newHashMap[key] = value
-                    nextByte = buffer.readByte()
-                }
-            }
-            11 -> {
-                val size = buffer.readInt()
-                val intArray = IntArray(size)
-                for (i in (intArray.indices)) {
-                    intArray[i] = buffer.readInt()
-                }
-                intArray
-            }
-            12 -> {
-                val size = buffer.readInt()
-                val longArray = LongArray(size)
-                for (i in (longArray.indices)) {
-                    longArray[i] = buffer.readLong()
-                }
-                longArray
-            }
-            else -> null
+
+            "[${value::class.simpleName}] $name = $valueText".prependIndent("  ")
         }
     }
 
-    private fun internalID(): Int {
-        return when (content) {
-            is Byte -> 1
-            is Short -> 2
-            is Int -> 3
-            is Long -> 4
-            is Float -> 5
-            is Double -> 6
-            is ByteArray -> 7
-            is String -> 8
-            isList() -> 9
-            isMap() -> 10
-            is IntArray -> 11
-            is LongArray -> 12
-            else -> 0
-        }
+    override fun equals(other: Any?): Boolean {
+        return toString() == other.toString()
     }
 
-    private fun isList(): Boolean {
-        if (content is ArrayList<*>) {
-            val contentCopy = content as ArrayList<*>
-            contentCopy.clear()
-            if (contentCopy == emptyArrayList) {
-                return true
+    override fun hashCode(): Int {
+
+        var result = name.hashCode()
+        result = 31 * result + listIDs.hashCode()
+
+        map.forEach { (key, value) ->
+
+            result = 31 * result + key.hashCode()
+
+            result = 31 * result + when (value) {
+                is IntArray  -> value.contentHashCode()
+                is ByteArray -> value.contentHashCode()
+                is LongArray -> value.contentHashCode()
+                else -> value.hashCode()
             }
         }
-        return false
+
+        return result
     }
 
-    private fun isMap(): Boolean {
-        if (content is HashMap<*, *>) {
-            val contentCopy = content as HashMap<*, *>
-            contentCopy.clear()
-            if (contentCopy == emptyHashMap) {
-                return true
+
+    // Gets the total amount of bytes needed to serialize this
+    private fun getTagSize(key: String, value: Any): Int {
+
+        // Key Size Short Size + Key Size + TagID Size + Value Size
+        return Short.SIZE_BYTES + key.length + Byte.SIZE_BYTES + when (value) {
+
+            is Byte -> Byte.SIZE_BYTES
+            is Short -> Short.SIZE_BYTES
+            is Int, is Float -> Int.SIZE_BYTES
+            is Long, is Double -> Long.SIZE_BYTES
+            is String -> Short.SIZE_BYTES + value.encodeToByteArray().size
+
+            // Size of List + List Type ID Size
+            is List<*> -> Int.SIZE_BYTES + Byte.SIZE_BYTES + value.sumBy {
+                // Doesn't need Key Size Short Size nor TagID hence minus
+                getTagSize("", it as Any) - Short.SIZE_BYTES - Byte.SIZE_BYTES
+            }
+
+            is NBT -> {
+
+                val dataSize = value.map.entries.sumBy {
+                    getTagSize(it.key, it.value)
+                }
+
+                // Map Size + End Tag Size
+                dataSize + Byte.SIZE_BYTES
+            }
+
+            is ByteArray -> Int.SIZE_BYTES + value.size
+            is IntArray -> Int.SIZE_BYTES + value.size * Int.SIZE_BYTES
+            is LongArray -> Int.SIZE_BYTES + value.size * Long.SIZE_BYTES
+
+            else -> error("Unknown tag: [${value::class.simpleName}]")
+        }
+    }
+
+
+    // Push without ID
+    private fun write(output: Output, name: String?, value: Any) {
+
+        when (value) {
+
+            is Byte -> output.writeByte(value)
+            is Short -> output.writeShort(value)
+            is Int -> output.writeInt(value)
+            is Long -> output.writeLong(value)
+            is Float -> output.writeFloat(value)
+            is Double -> output.writeDouble(value)
+
+            is ByteArray -> {
+                output.writeInt(value.size)
+                output.writeByteArray(value)
+            }
+
+
+            is String -> output.writeUTF8(value)
+
+            is List<*> -> {
+
+                // Defaults to tag end type
+                val listId = listIDs[name]!!
+
+                output.writeByte(listId.toByte())
+                output.writeInt(value.size)
+
+                value.forEach {
+                    write(output, null, it!!)
+                }
+            }
+
+            is NBT -> {
+
+                // If not in a list
+                if (name != null) {
+                    output.writeByte(10)   // Compound ID
+                    output.writeUTF8(name) // Compound Name
+                }
+
+                value.map.forEach { (name, value) ->
+
+                    val id = idFor(value)
+
+                    // Is not compound
+                    if (id != 10) {
+                        output.writeByte(id.toByte())
+                        output.writeUTF8(name)
+                    }
+
+                    write(output, name, value)
+                }
+
+                // End tag
+                output.writeByte(0)
+            }
+
+            is IntArray -> {
+                output.writeInt(value.size)
+                value.forEach { output.writeInt(it) }
+            }
+
+            is LongArray -> {
+                output.writeInt(value.size)
+                value.forEach { output.writeLong(it) }
+            }
+
+            else -> error("Unknown tag: [${value::class.simpleName}] $name = $value")
+        }
+    }
+
+    private fun idFor(value: Any) = when(value) {
+
+        is Byte -> 1
+        is Short -> 2
+        is Int -> 3
+        is Long -> 4
+        is Float -> 5
+        is Double -> 6
+        is ByteArray -> 7
+        is String -> 8
+        is List<*> -> 9
+        is NBT -> 10
+        is IntArray -> 11
+        is LongArray -> 12
+
+        else -> error("Unknown tag: [${value::class.simpleName}] $name = $value")
+    }
+
+
+    companion object {
+
+        fun pull(input: File, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): NBT {
+            return pull(input.readBytes(), endianness)
+        }
+
+        // Don't forget to close yourself
+        // Provide a buffered stream please <3
+        fun pull(input: ByteArray, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): NBT {
+            return pull(ByteBuffer.wrap(input).apply { order(endianness) })
+        }
+
+        fun pull(input: ByteBuffer): NBT {
+            return pull(ByteBufferInput(input))
+        }
+
+        fun pull(input: Input): NBT {
+            return if (input is AutoCloseable) {
+                input.use { read(input) }
+            }
+            else {
+                read(input)
             }
         }
-        return false
-    }
-}
 
-fun ByteBuf.writeString(string: String) {
-    val bytes = string.toByteArray(Charsets.UTF_8)
-    this.writeShort(bytes.size)
-    this.writeBytes(bytes)
-}
+        fun pull(input: DataInputStream, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): NBT {
+            return read(StreamedInput(input, endianness))
+        }
 
-fun ByteBuf.readString(first: Byte? = null): String {
-    var bytes = readBytes(readShort().toInt()).array()
-    if (first != null) {
-        bytes = byteArrayOf(first).plus(bytes)
+        fun pullGzip(input: File, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): NBT {
+            return pull(DataInputStream(GZIPInputStream(input.inputStream().buffered())), endianness)
+        }
+
+        fun pullZlib(input: File, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): NBT {
+            return pull(DataInputStream(DeflaterInputStream(input.inputStream().buffered())), endianness)
+        }
+
+
+        private fun read(input: Input, readID: Boolean = true, name: String? = null): NBT {
+
+            if (readID) {
+                check(input.readByte() == 10.toByte()) {
+                    "Expected a compound, didn't get one :C"
+                }
+            }
+
+            val nbt = NBT(name ?: input.readUTF8(), mapOf())
+
+
+            while (true) {
+
+                val inID = input.readByte().toInt()
+
+                val inName = if (inID != 0) input.readUTF8() else ""
+
+                // Is end
+                if (inID == 0) {
+                    break
+                }
+
+                nbt.map[inName] = readTag(input, inID, nbt, inName)
+            }
+
+            return nbt
+        }
+
+        private fun readList(name: String, nbt: NBT, input: Input): List<*> {
+
+            val inID = input.readByte().toInt()
+            val size = input.readInt()
+
+            nbt.listIDs[name] = inID
+
+            return List(size) {
+                readTag(input, inID, nbt, "")
+            }
+        }
+
+        private fun readTag(input: Input, id: Int, nbt: NBT, name: String?): Any = when(id) {
+
+            1 -> input.readByte()
+            2 -> input.readShort()
+            3 -> input.readInt()
+            4 -> input.readLong()
+            5 -> input.readFloat()
+            6 -> input.readDouble()
+            7 -> input.readByteArray(input.readInt())
+            8 -> input.readUTF8()
+            9 -> readList(name!!, nbt, input)
+            10 -> read(input, false, name)
+            11 -> IntArray(input.readInt()) { input.readInt() }
+            12 -> LongArray(input.readInt()) { input.readLong() }
+
+            else -> error("Invalid NBT id: $id")
+        }
+
+        private fun Input.readUTF8(): String {
+            return readByteArray(readShort().toInt()).decodeToString()
+        }
+
+        private fun Output.writeUTF8(text: String) {
+            val byteArray = text.encodeToByteArray()
+            writeShort(byteArray.size.toShort())
+            writeByteArray(byteArray)
+        }
     }
-    return bytes.toString(Charsets.UTF_8)
+
+
+
+    interface Input {
+        fun readByte(): Byte
+        fun readShort(): Short
+        fun readInt(): Int
+        fun readLong(): Long
+        fun readFloat(): Float
+        fun readDouble(): Double
+        fun readByteArray(amountOfBytes: Int): ByteArray
+    }
+
+    interface Output {
+        fun writeByte(byte: Byte)
+        fun writeShort(short: Short)
+        fun writeInt(int: Int)
+        fun writeLong(long: Long)
+        fun writeFloat(float: Float)
+        fun writeDouble(double: Double)
+        fun writeByteArray(byteArray: ByteArray) // Does not prepend the size
+    }
+
+    // TODO: Simplify the conversion of bytes by looking at LittleEndianDataInputStream's implementation
+    // TODO: Use extensions for above's TODO
+    class StreamedInput(private val inputStream: DataInputStream, private val endianness: ByteOrder) : InputStream(), Input {
+
+        // Needed for InputStream inheritance
+        override fun read(): Int {
+            return inputStream.read()
+        }
+
+        override fun readByte(): Byte {
+            return inputStream.readByte()
+        }
+
+        override fun readShort(): Short {
+            return if (endianness == ByteOrder.LITTLE_ENDIAN) {
+                java.lang.Short.reverseBytes(inputStream.readShort())
+            }
+            else {
+                return inputStream.readShort()
+            }
+        }
+
+        override fun readInt(): Int {
+            return if (endianness == ByteOrder.LITTLE_ENDIAN) {
+                Integer.reverseBytes(inputStream.readInt())
+            }
+            else {
+                inputStream.readInt()
+            }
+        }
+
+        override fun readLong(): Long {
+            return if (endianness == ByteOrder.LITTLE_ENDIAN) {
+                java.lang.Long.reverseBytes(inputStream.readLong())
+            }
+            else {
+                inputStream.readLong()
+            }
+        }
+
+        override fun readFloat(): Float {
+            return if (endianness == ByteOrder.LITTLE_ENDIAN) {
+                java.lang.Float.intBitsToFloat(Integer.reverseBytes(java.lang.Float.floatToIntBits(inputStream.readFloat())))
+            }
+            else {
+                inputStream.readFloat()
+            }
+        }
+
+        override fun readDouble(): Double {
+            return if (endianness == ByteOrder.LITTLE_ENDIAN) {
+                java.lang.Double.longBitsToDouble(java.lang.Long.reverseBytes(java.lang.Double.doubleToLongBits(inputStream.readDouble())))
+            }
+            else {
+                inputStream.readDouble()
+            }
+        }
+
+        override fun readByteArray(amountOfBytes: Int): ByteArray {
+            return inputStream.readNBytes(amountOfBytes)
+        }
+
+        override fun close() {
+            inputStream.close()
+        }
+
+    }
+
+    class ByteBufferInput(private val byteBuffer: ByteBuffer) : Input {
+
+        override fun readByte(): Byte {
+            return byteBuffer.get()
+        }
+
+        override fun readShort(): Short {
+            return byteBuffer.short
+        }
+
+        override fun readInt(): Int {
+            return byteBuffer.int
+        }
+
+        override fun readLong(): Long {
+            return byteBuffer.long
+        }
+
+        override fun readFloat(): Float {
+            return byteBuffer.float
+        }
+
+        override fun readDouble(): Double {
+            return byteBuffer.double
+        }
+
+        // Needs to be done this way to support endianness
+        override fun readByteArray(amountOfBytes: Int): ByteArray {
+            return ByteArray(amountOfBytes).apply {
+                byteBuffer.get(this)
+            }
+        }
+
+    }
+
+    class StreamedOutput(private val outputStream: DataOutputStream, private val endianness: ByteOrder) : OutputStream(), Output {
+
+        // Needed for OutputStream inheritance
+        override fun write(b: Int) {
+            return outputStream.write(b)
+        }
+
+        override fun writeByte(byte: Byte) {
+            outputStream.write(byte.toInt())
+        }
+
+        override fun writeShort(short: Short) {
+            if (endianness == ByteOrder.LITTLE_ENDIAN) {
+                outputStream.writeShort(java.lang.Short.reverseBytes(short).toInt())
+            }
+            else {
+                outputStream.writeShort(short.toInt())
+            }
+        }
+
+        override fun writeInt(int: Int) {
+            if (endianness == ByteOrder.LITTLE_ENDIAN) {
+                outputStream.writeInt(Integer.reverseBytes(int))
+            }
+            else {
+                outputStream.writeInt(int)
+            }
+        }
+
+        override fun writeLong(long: Long) {
+            if (endianness == ByteOrder.LITTLE_ENDIAN) {
+                outputStream.writeLong(java.lang.Long.reverseBytes(long))
+            }
+            else {
+                outputStream.writeLong(long)
+            }
+        }
+
+        override fun writeFloat(float: Float) {
+            if (endianness == ByteOrder.LITTLE_ENDIAN) {
+                outputStream.writeFloat(java.lang.Float.intBitsToFloat(Integer.reverseBytes(java.lang.Float.floatToIntBits(float))))
+            }
+            else {
+                outputStream.writeFloat(float)
+            }
+        }
+
+        override fun writeDouble(double: Double) {
+            if (endianness == ByteOrder.LITTLE_ENDIAN) {
+                outputStream.writeDouble(java.lang.Double.longBitsToDouble(java.lang.Long.reverseBytes(java.lang.Double.doubleToLongBits(double))))
+            }
+            else {
+                outputStream.writeDouble(double)
+            }
+        }
+
+        override fun writeByteArray(byteArray: ByteArray) {
+            outputStream.write(byteArray)
+        }
+
+
+        override fun close() {
+            outputStream.close()
+        }
+
+    }
+
+    class ByteBufferOutput(private val byteBuffer: ByteBuffer) : Output {
+
+        override fun writeByte(byte: Byte) {
+            byteBuffer.put(byte)
+        }
+
+        override fun writeShort(short: Short) {
+            byteBuffer.putShort(short)
+        }
+
+        override fun writeInt(int: Int) {
+            byteBuffer.putInt(int)
+        }
+
+        override fun writeLong(long: Long) {
+            byteBuffer.putLong(long)
+        }
+
+        override fun writeFloat(float: Float) {
+            byteBuffer.putFloat(float)
+        }
+
+        override fun writeDouble(double: Double) {
+            byteBuffer.putDouble(double)
+        }
+
+        override fun writeByteArray(byteArray: ByteArray) {
+            byteBuffer.put(byteArray)
+        }
+
+    }
+
 }

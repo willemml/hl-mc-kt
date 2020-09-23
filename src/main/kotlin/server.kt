@@ -1,21 +1,11 @@
 import io.ktor.application.call
 import io.ktor.html.respondHtml
 import io.ktor.http.HttpStatusCode
-import io.ktor.network.selector.*
-import io.ktor.network.sockets.*
-import io.ktor.response.*
 import io.ktor.routing.get
 import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
-import io.ktor.utils.io.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.html.*
-import protocol.Profile
-import protocol.Stack
-import protocol.login
-import java.net.InetSocketAddress
 
 fun HTML.index() {
     head {
