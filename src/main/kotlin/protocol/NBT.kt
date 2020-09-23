@@ -2,10 +2,10 @@ package protocol
 
 import io.netty.buffer.ByteBuf
 
-class Tag(val type: Int = 0) {
+class Tag(private val type: Int = 0) {
     private val emptyArrayList = ArrayList<Tag>()
     private val emptyHashMap = HashMap<String, Tag>()
-    var content: Any? = null
+    private var content: Any? = null
 
     fun writeToBuffer(buffer: ByteBuf) {
         when (type) {
@@ -22,21 +22,21 @@ class Tag(val type: Int = 0) {
             }
             8 -> buffer.writeString(content as String)
             9 -> {
-                if ((content as ArrayList<Tag>).isEmpty()) {
+                if ((content as ArrayList<*>).isEmpty()) {
                     buffer.writeByte(0)
                     buffer.writeInt(0)
                 }
                 else {
                     buffer.writeByte(internalID())
-                    buffer.writeInt((content as ArrayList<Tag>).size)
-                    (content as ArrayList<Tag>).forEach { it.writeToBuffer(buffer) }
+                    buffer.writeInt((content as ArrayList<*>).size)
+                    (content as ArrayList<*>).forEach { (it as Tag).writeToBuffer(buffer) }
                 }
             }
             10 -> {
-                (content as HashMap<String, Tag>).forEach {
-                    buffer.writeByte(it.value.internalID())
-                    buffer.writeString(it.key)
-                    (it.value).writeToBuffer(buffer)
+                (content as HashMap<*, *>).forEach {
+                    buffer.writeByte((it.value as Tag).internalID())
+                    buffer.writeString(it.key as String)
+                    (it.value as Tag).writeToBuffer(buffer)
                 }
                 buffer.writeByte(0)
             }
@@ -86,7 +86,7 @@ class Tag(val type: Int = 0) {
             }
             11 -> {
                 val size = buffer.readInt()
-                var intArray = IntArray(size)
+                val intArray = IntArray(size)
                 for (i in (intArray.indices)) {
                     intArray[i] = buffer.readInt()
                 }
@@ -94,7 +94,7 @@ class Tag(val type: Int = 0) {
             }
             12 -> {
                 val size = buffer.readInt()
-                var longArray = LongArray(size)
+                val longArray = LongArray(size)
                 for (i in (longArray.indices)) {
                     longArray[i] = buffer.readLong()
                 }
@@ -104,7 +104,7 @@ class Tag(val type: Int = 0) {
         }
     }
 
-    fun internalID(): Int {
+    private fun internalID(): Int {
         return when (content) {
             is Byte -> 1
             is Short -> 2
@@ -144,8 +144,6 @@ class Tag(val type: Int = 0) {
         return false
     }
 }
-
-data class NamedTag(var name: String, var tag: Tag)
 
 fun ByteBuf.writeString(string: String) {
     val bytes = string.toByteArray(Charsets.UTF_8)

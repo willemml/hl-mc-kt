@@ -8,19 +8,15 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 
-inline fun singleUseClient(run: (HttpClient) -> Any): Any {
-    val client = HttpClient(Apache) {
-        install(JsonFeature) {
-            serializer = JacksonSerializer()
-        }
-        install(Logging) {
-            logger = Logger.SIMPLE
-            level = LogLevel.ALL
-        }
+
+val client = HttpClient(Apache) {
+    install(JsonFeature) {
+        serializer = JacksonSerializer()
     }
-    val invoke = run.invoke(client)
-    client.close()
-    return invoke
+    install(Logging) {
+        logger = Logger.SIMPLE
+        level = LogLevel.ALL
+    }
 }
 
 enum class URLs(val url: String) {
@@ -32,38 +28,34 @@ enum class URLs(val url: String) {
 }
 
 suspend fun login(username: String, password: String): Profile {
-    return singleUseClient { client ->
-        client.post {
-            url(URLs.Login.url)
-            body = LoginRequest(username, password)
-        }
-    } as Profile
+    return client.post {
+        url(URLs.Login.url)
+        contentType(ContentType.Application.Json)
+        body = LoginRequest(username, password)
+    }
 }
 
 suspend fun refresh(profile: Profile): Profile {
-    profile.accessToken = singleUseClient { client ->
-        client.post<Profile> {
-            url(URLs.Refresh.url)
-            body = Refresh(profile.accessToken, profile.clientToken)
-        }.accessToken
-    } as String
+    profile.accessToken = client.post<Profile> {
+        url(URLs.Refresh.url)
+        contentType(ContentType.Application.Json)
+        body = Refresh(profile.accessToken, profile.clientToken)
+    }.accessToken
     return profile
 }
 
 suspend fun validate(profile: Profile): Boolean {
-    return singleUseClient { client ->
-        return client.post<HttpResponse> {
-            url(URLs.Validate.url)
-            body = Validate(profile.accessToken, profile.clientToken)
-        }.status == HttpStatusCode.NoContent
-    } as Boolean
+    return client.post<HttpResponse> {
+        url(URLs.Validate.url)
+        contentType(ContentType.Application.Json)
+        body = Validate(profile.accessToken, profile.clientToken)
+    }.status == HttpStatusCode.NoContent
 }
 
 suspend fun signOut(username: String, password: String) {
-    singleUseClient { client ->
-        client.post<HttpResponse> {
-            url(URLs.SignOut.url)
-            body = SignOut(username, password)
-        }
+    client.post<HttpResponse> {
+        url(URLs.SignOut.url)
+        contentType(ContentType.Application.Json)
+        body = SignOut(username, password)
     }
 }
