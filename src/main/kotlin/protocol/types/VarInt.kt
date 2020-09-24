@@ -1,9 +1,9 @@
 package protocol.types
 
-import io.ktor.utils.io.*
+import io.ktor.utils.io.core.*
 import kotlin.experimental.or
 
-suspend fun ByteWriteChannel.writeVarInt(value: Int) {
+fun BytePacketBuilder.writeVarInt(value: Int) {
     do {
         var temp = (value and 127).toByte()
         val variableValue: Int = value ushr 7
@@ -14,7 +14,7 @@ suspend fun ByteWriteChannel.writeVarInt(value: Int) {
     } while (variableValue != 0)
 }
 
-suspend fun ByteReadChannel.readVarInt(): Int {
+fun ByteReadPacket.readVarInt(): Int {
     var numRead = 0
     var result = 0
     var read: Byte

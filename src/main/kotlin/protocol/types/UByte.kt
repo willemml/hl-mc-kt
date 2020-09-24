@@ -2,11 +2,6 @@ package protocol.types
 
 import io.ktor.utils.io.*
 
-@ExperimentalUnsignedTypes
-suspend fun ByteWriteChannel.writeUByte(value: UByte) {
-    writeByte(value.toByte())
-}
-
 suspend fun ByteReadChannel.readBit(): Int {
     return if (readBoolean()) 1 else 0
 }
