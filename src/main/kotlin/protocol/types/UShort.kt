@@ -8,6 +8,11 @@ suspend fun ByteWriteChannel.writeUShort(value: UShort) {
 }
 
 @ExperimentalUnsignedTypes
+suspend fun ByteReadChannel.readUShort(): UShort {
+    return (((readByte().toUInt() and 255u) shl 8) or (readByte().toUInt() and 255u)).toUShort()
+}
+
+@ExperimentalUnsignedTypes
 fun UShort.shr(bitCount: Int): UShort {
     return toUInt().shr(bitCount).toUShort()
 }
