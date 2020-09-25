@@ -5,12 +5,14 @@ import protocol.packets.Packet
 import protocol.types.VarInt
 
 abstract class ClientPacket(id: VarInt): Packet(id) {
+    @ExperimentalUnsignedTypes
     suspend fun send(channel: ByteWriteChannel) {
-        val bytes = ArrayList<Byte>()
+        val bytes = ArrayList<UByte>()
         id.getBytes().forEach { bytes.add(it) }
         this.toByteArray().forEach { bytes.add(it) }
         VarInt(bytes.size).getBytes().reversedArray().forEach { bytes.add(0, it) }
-        channel.writeFully(bytes.toByteArray())
+        channel.writeFully(bytes.toUByteArray().asByteArray())
     }
-    abstract suspend fun toByteArray(): ByteArray
+    @ExperimentalUnsignedTypes
+    abstract suspend fun toByteArray(): UByteArray
 }

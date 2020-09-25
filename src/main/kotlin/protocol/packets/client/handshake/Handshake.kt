@@ -16,11 +16,12 @@ data class Handshake @ExperimentalUnsignedTypes constructor(
     val serverPort: UShort,
     val nextState: NextState,
 ) : ClientPacket(VarInt(0x00)) {
-    override suspend fun toByteArray(): ByteArray {
-        val bytes = ArrayList<Byte>()
+    @ExperimentalUnsignedTypes
+    override suspend fun toByteArray(): UByteArray {
+        val bytes = ArrayList<UByte>()
         protocolVersion.getBytes().forEach { bytes.add(it) }
         serverAddress.toMinecraftBytes().forEach { bytes.add(it) }
         nextState.id.getBytes().forEach { bytes.add(it) }
-        return bytes.toByteArray()
+        return bytes.toUByteArray()
     }
 }
