@@ -19,7 +19,7 @@ class VarInt(var value: Int) {
 }
 
 @ExperimentalUnsignedTypes
-suspend fun ByteReadChannel.readVarInt(): Int {
+suspend fun ByteReadChannel.readVarInt(): VarInt {
     var numRead = 0
     var result = 0
     var read: UByte
@@ -29,9 +29,8 @@ suspend fun ByteReadChannel.readVarInt(): Int {
         result = result or ((value shl 7 * numRead).toInt())
         numRead++
         if (numRead >= 5) {
-            println("varint too big $result")
-            return result
+            throw RuntimeException("VarInt is too big")
         }
     } while ((read + 128u) != 0u)
-    return result
+    return VarInt(result)
 }

@@ -4,7 +4,7 @@ import io.ktor.utils.io.*
 
 @ExperimentalUnsignedTypes
 suspend fun ByteReadChannel.readMinecraftString(): String {
-    return readUTF8Line(readVarInt())?: ""
+    return readUTF8Line(readVarInt().value)?: ""
 }
 
 @ExperimentalUnsignedTypes

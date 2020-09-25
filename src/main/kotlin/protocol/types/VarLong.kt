@@ -1,35 +1,36 @@
 package protocol.types
 
 import io.ktor.utils.io.*
-import kotlin.experimental.or
 
 class VarLong(var value: Long) {
-    fun getBytes(): ByteArray {
-        val arrayList = ArrayList<Byte>()
+    @ExperimentalUnsignedTypes
+    fun getBytes(): UByteArray {
+        val arrayList = ArrayList<UByte>()
         do {
-            var temp = (value and 127).toByte()
-            val variableValue: Long = value ushr 7
-            if (variableValue != 0L) {
-                temp = temp or 128.toByte()
+            var temp = (value and 127).toUByte()
+            value = value ushr 7
+            if (value != 0L) {
+                temp = temp or 128.toUByte()
             }
             arrayList.add(temp)
-        } while (variableValue != 0L)
-        return arrayList.toByteArray()
+        } while (value != 0L)
+        return arrayList.toUByteArray()
     }
 }
 
+@ExperimentalUnsignedTypes
 suspend fun ByteReadChannel.toVarLong(): VarLong {
     var numRead = 0
     var result = 0L
-    var read: Byte
+    var read: UByte
     do {
-        read = readByte()
-        val value: Long = read + 127L
-        result = result or (value shl 7 * numRead)
+        read = readUByte()
+        val value = read + 127u
+        result = result or ((value shl 7 * numRead).toLong())
         numRead++
         if (numRead > 10) {
             throw RuntimeException("VarLong is too big")
         }
-    } while ((read + 128) != 0)
+    } while ((read + 128u) != 0u)
     return VarLong(result)
 }
