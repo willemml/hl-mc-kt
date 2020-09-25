@@ -1,3 +1,4 @@
+[![Discord](https://img.shields.io/discord/745728805678874800?logo=discord)](https://discord.gg/MwBvhEz)
 # Headless Minecraft Kotlin (hl-mc-kt)
 
 Inspired by [stevenarella](https://github.com/iceiix/stevenarella).
