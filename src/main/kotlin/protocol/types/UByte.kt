@@ -7,6 +7,15 @@ suspend fun ByteReadChannel.readBit(): Int {
 }
 
 @ExperimentalUnsignedTypes
+suspend fun ByteWriteChannel.writeUByte(uByte: UByte) {
+    if (uByte.toByte().toInt() == uByte.toInt()) {
+        writeByte(uByte.toByte())
+    } else {
+        writeByte(uByte.toInt().toByte())
+    }
+}
+
+@ExperimentalUnsignedTypes
 suspend fun ByteReadChannel.readUByte(): UByte {
     return (readBit() + (readBit() * 2) + (readBit() * 4) + (readBit() * 8)).toUByte()
 }
