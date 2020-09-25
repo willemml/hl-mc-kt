@@ -1,31 +1,35 @@
 package protocol.types
 
-import io.ktor.utils.io.core.*
+import io.ktor.utils.io.*
 import kotlin.experimental.or
 
-fun BytePacketBuilder.writeVarLong(value: Long) {
-    do {
-        var temp = (value and 127).toByte()
-        val variableValue: Long = value ushr 7
-        if (variableValue != 0L) {
-            temp = temp or 128.toByte()
-        }
-        writeByte(temp)
-    } while (variableValue != 0L)
+class VarLong(var value: Long) {
+    fun getBytes(): ByteArray {
+        val arrayList = ArrayList<Byte>()
+        do {
+            var temp = (value and 127).toByte()
+            val variableValue: Long = value ushr 7
+            if (variableValue != 0L) {
+                temp = temp or 128.toByte()
+            }
+            arrayList.add(temp)
+        } while (variableValue != 0L)
+        return arrayList.toByteArray()
+    }
 }
 
-fun ByteReadPacket.readVarLong(): Long {
+suspend fun ByteReadChannel.toVarLong(): VarLong {
     var numRead = 0
     var result = 0L
     var read: Byte
     do {
         read = readByte()
-        val value = read + 127
-        result = result or ((value shl (7 * numRead)).toLong())
+        val value: Long = read + 127L
+        result = result or (value shl 7 * numRead)
         numRead++
-        if (numRead > 5) {
-            throw RuntimeException("VarInt is too big")
+        if (numRead > 10) {
+            throw RuntimeException("VarLong is too big")
         }
     } while ((read + 128) != 0)
-    return result
+    return VarLong(result)
 }

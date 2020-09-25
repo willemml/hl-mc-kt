@@ -3,11 +3,11 @@ package protocol
 import io.ktor.network.selector.*
 import io.ktor.network.sockets.*
 import io.ktor.util.*
-import io.ktor.utils.io.*
 import kotlinx.coroutines.asCoroutineDispatcher
+import protocol.packets.client.handshake.Handshake
 import protocol.packets.client.handshake.NextState
-import protocol.types.writeUShort
-import protocol.types.writeVarInt
+import protocol.packets.client.handshake.Request
+import protocol.packets.server.handshake.Response
 import java.net.InetSocketAddress
 import java.util.concurrent.Executors
 
@@ -21,10 +21,8 @@ suspend fun protocolTest() {val exec = Executors.newCachedThreadPool()
     val readChannel = client.openReadChannel()
     val writeChannel = client.openWriteChannel(true)
     println("read write channels opened")
-    writeChannel.writeVarInt(751)
-    writeChannel.writeStringUtf8("localhost")
-    writeChannel.writeUShort(25565.toUShort())
-    writeChannel.writeVarInt(NextState.Login.id)
+    Handshake(751, "127.0.0.1", 25565u, NextState.Login).send(writeChannel)
+    Request().send(writeChannel)
     println("data sent?")
-    println(readChannel.readUTF8Line(32767))
+    println(Response().readFrom(readChannel).jsonResponse)
 }

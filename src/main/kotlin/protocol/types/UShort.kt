@@ -1,15 +1,8 @@
 package protocol.types
 
-import io.ktor.utils.io.*
-
 @ExperimentalUnsignedTypes
-suspend fun ByteWriteChannel.writeUShort(value: UShort) {
-    for (i in value.toByteArray()) writeByte(i)
-}
-
-@ExperimentalUnsignedTypes
-suspend fun ByteReadChannel.readUShort(): UShort {
-    return (((readByte().toUInt() and 255u) shl 8) or (readByte().toUInt() and 255u)).toUShort()
+fun ByteArray.readUShort(): UShort {
+    return (((this[0].toUInt() and 255u) shl 8) or (this[1].toUInt() and 255u)).toUShort()
 }
 
 @ExperimentalUnsignedTypes
