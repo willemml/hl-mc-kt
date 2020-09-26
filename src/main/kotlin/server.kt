@@ -7,6 +7,7 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.util.*
 import kotlinx.html.*
+import kotlinx.serialization.InternalSerializationApi
 
 fun HTML.index() {
     head {
@@ -19,6 +20,7 @@ fun HTML.index() {
     }
 }
 
+@InternalSerializationApi
 @KtorExperimentalAPI
 @ExperimentalUnsignedTypes
 suspend fun main() {
