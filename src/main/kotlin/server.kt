@@ -7,7 +7,6 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.util.*
 import kotlinx.html.*
-import protocol.protocolTest
 
 fun HTML.index() {
     head {

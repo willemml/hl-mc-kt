@@ -17,6 +17,7 @@ repositories {
     maven {
         url = uri("https://dl.bintray.com/kotlin/kotlinx")
     }
+    maven("https://jitpack.io")
 }
 dependencies {
     implementation("io.ktor:ktor-jackson:1.4.0")
@@ -29,6 +30,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.0.0-RC2")
+    implementation("com.github.DevSrSouza.kt-mc-packet:kt-mc-packet:a7f9999a71")
 }
 tasks.withType<KotlinCompile>() {
     kotlinOptions.jvmTarget = "14"
