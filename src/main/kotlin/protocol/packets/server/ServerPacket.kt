@@ -1,9 +1,6 @@
 package protocol.packets.server
 
-import io.ktor.utils.io.*
 import protocol.packets.Packet
-import protocol.types.VarInt
+import protocol.packets.VarInt
 
-abstract class ServerPacket(id: VarInt): Packet(id) {
-    abstract suspend fun readFrom(channel: ByteReadChannel): ServerPacket
-}
+abstract class ServerPacket(@VarInt id: Int): Packet(id)
