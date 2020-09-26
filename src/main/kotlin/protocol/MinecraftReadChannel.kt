@@ -15,6 +15,22 @@ class MinecraftReadChannel(val readChannel: ByteReadChannel) {
         }
     }
 
+    suspend fun readVarLong(): Long {
+        var numRead = 0
+        var result = 0L
+        var read: Byte
+        do {
+            read = readChannel.readByte()
+            val value = (read and 127).toLong()
+            result = result or (value shl 7 * numRead)
+            numRead++
+            if (numRead > 10) {
+                throw RuntimeException("VarInt is too big")
+            }
+        } while (read and 128.toByte() != 0.toByte())
+        return result
+    }
+
     suspend fun readVarInt(): Int {
         var numRead = 0
         var result = 0

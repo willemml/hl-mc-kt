@@ -24,10 +24,7 @@ fun protocolTest() {
                 val output = socket.openWriteChannel(true)
                 val mcOutput = MinecraftWriteChannel(output)
                 try {
-                    while (true) {
-                        mcOutput.writeString("Hello from server!")
-                        mcOutput.writePacket(Handshake(751, "", 243u, NextState.Login))
-                    }
+                    while(true) mcOutput.writePacket(Handshake(751, "", 243u, NextState.Login))
                 } catch (e: Throwable) {
                     e.printStackTrace()
                     socket.dispose()
@@ -46,7 +43,13 @@ fun protocolTest() {
         println("data sent?")
         println(Response().readFrom(input).jsonResponse)*/
         while (true) {
-            val response = mcInput.readString(32767)
+            println(mcInput.readVarInt())
+            println(mcInput.readVarInt())
+            println(mcInput.readVarInt())
+            println(mcInput.readString(255))
+            println(mcInput.readChannel.readShort())
+            println(mcInput.readVarInt())
+            //val response = mcInput.readString(32767)
             //println("Server said: $response")
         }
     }

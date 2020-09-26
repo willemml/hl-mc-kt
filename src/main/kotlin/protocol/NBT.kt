@@ -28,13 +28,13 @@ SOFTWARE.
 
 package protocol
 
+import io.ktor.util.*
+import io.ktor.utils.io.*
 import java.io.*
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.zip.DeflaterInputStream
-import java.util.zip.DeflaterOutputStream
 import java.util.zip.GZIPInputStream
-import java.util.zip.GZIPOutputStream
 
 // TODO: Add coroutine support
 class NBT(
@@ -54,52 +54,7 @@ class NBT(
         return map[key] as T
     }
 
-
-    fun pushZlib(output: File, endianness: ByteOrder = ByteOrder.BIG_ENDIAN) {
-        push(StreamedOutput(DataOutputStream(DeflaterOutputStream(output.outputStream().buffered())), endianness))
-    }
-
-    fun pushGzip(output: File, endianness: ByteOrder = ByteOrder.BIG_ENDIAN) {
-        push(StreamedOutput(DataOutputStream(GZIPOutputStream(output.outputStream().buffered())), endianness))
-    }
-
-    fun push(output: File, endianness: ByteOrder = ByteOrder.BIG_ENDIAN) {
-
-        output.parentFile?.mkdirs()
-        output.createNewFile()
-
-        push(output.outputStream(), endianness)
-    }
-
-    fun push(output: DataOutputStream, endianness: ByteOrder = ByteOrder.BIG_ENDIAN) {
-
-        val nbtSize = getNBTSize()
-        val byteBuffer = ByteBuffer.allocateDirect(nbtSize).apply { order(endianness) }
-
-        push(byteBuffer)
-
-        val bytes = ByteArray(nbtSize).apply {
-            byteBuffer.get(0, this)
-        }
-
-        output.write(bytes)
-    }
-
-    fun push(output: FileOutputStream, endianness: ByteOrder = ByteOrder.BIG_ENDIAN) {
-
-        val byteBuffer = ByteBuffer.allocateDirect(getNBTSize()).apply { order(endianness) }
-        push(byteBuffer)
-
-        byteBuffer.position(0)
-
-        output.channel.write(byteBuffer)
-    }
-
-    fun push(output: ByteBuffer) {
-        push(ByteBufferOutput(output))
-    }
-
-    fun push(output: Output) {
+    suspend fun push(output: ByteChannel) {
         if (output is AutoCloseable) {
             output.use { write(output, name, this) }
         }
@@ -194,35 +149,36 @@ class NBT(
 
 
     // Push without ID
-    private fun write(output: Output, name: String?, value: Any) {
+    private suspend fun write(output: ByteChannel, name: String?, value: Any) {
+        val channel = ByteChannel()
 
         when (value) {
 
-            is Byte -> output.writeByte(value)
-            is Short -> output.writeShort(value)
-            is Int -> output.writeInt(value)
-            is Long -> output.writeLong(value)
-            is Float -> output.writeFloat(value)
-            is Double -> output.writeDouble(value)
+            is Byte -> channel.writeByte(value)
+            is Short -> channel.writeShort(value)
+            is Int -> channel.writeInt(value)
+            is Long -> channel.writeLong(value)
+            is Float -> channel.writeFloat(value)
+            is Double -> channel.writeDouble(value)
 
             is ByteArray -> {
-                output.writeInt(value.size)
-                output.writeByteArray(value)
+                channel.writeInt(value.size)
+                channel.writeFully(value)
             }
 
 
-            is String -> output.writeUTF8(value)
+            is String -> channel.writeString(value)
 
             is List<*> -> {
 
                 // Defaults to tag end type
                 val listId = listIDs[name]!!
 
-                output.writeByte(listId.toByte())
-                output.writeInt(value.size)
+                channel.writeByte(listId.toByte())
+                channel.writeInt(value.size)
 
                 value.forEach {
-                    write(output, null, it!!)
+                    write(channel, null, it!!)
                 }
             }
 
@@ -230,8 +186,8 @@ class NBT(
 
                 // If not in a list
                 if (name != null) {
-                    output.writeByte(10)   // Compound ID
-                    output.writeUTF8(name) // Compound Name
+                    channel.writeByte(10)   // Compound ID
+                    channel.writeString(name) // Compound Name
                 }
 
                 value.map.forEach { (name, value) ->
@@ -240,29 +196,31 @@ class NBT(
 
                     // Is not compound
                     if (id != 10) {
-                        output.writeByte(id.toByte())
-                        output.writeUTF8(name)
+                        channel.writeByte(id.toByte())
+                        channel.writeString(name)
                     }
 
-                    write(output, name, value)
+                    write(channel, name, value)
                 }
 
                 // End tag
-                output.writeByte(0)
+                channel.writeByte(0)
             }
 
             is IntArray -> {
-                output.writeInt(value.size)
-                value.forEach { output.writeInt(it) }
+                channel.writeInt(value.size)
+                value.forEach { channel.writeInt(it) }
             }
 
             is LongArray -> {
-                output.writeInt(value.size)
-                value.forEach { output.writeLong(it) }
+                channel.writeInt(value.size)
+                value.forEach { channel.writeLong(it) }
             }
 
             else -> error("Unknown tag: [${value::class.simpleName}] $name = $value")
         }
+
+        output.writeFully(channel.toByteArray())
     }
 
     private fun idFor(value: Any) = when(value) {
