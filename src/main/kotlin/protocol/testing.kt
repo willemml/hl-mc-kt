@@ -7,6 +7,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import protocol.packets.client.handshake.Handshake
+import protocol.packets.client.handshake.NextState
 import java.net.InetSocketAddress
 
 @ExperimentalUnsignedTypes
@@ -24,6 +26,7 @@ fun protocolTest() {
                 try {
                     while (true) {
                         mcOutput.writeString("Hello from server!")
+                        mcOutput.writePacket(Handshake(751, "", 243u, NextState.Login))
                     }
                 } catch (e: Throwable) {
                     e.printStackTrace()
@@ -44,7 +47,7 @@ fun protocolTest() {
         println(Response().readFrom(input).jsonResponse)*/
         while (true) {
             val response = mcInput.readString(32767)
-            println("Server said: $response")
+            //println("Server said: $response")
         }
     }
 }
