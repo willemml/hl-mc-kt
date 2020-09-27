@@ -59,3 +59,11 @@ suspend fun signOut(username: String, password: String) {
         body = SignOut(username, password)
     }
 }
+
+suspend fun join(session: Session, serverID: String): Boolean {
+    return client.post<HttpResponse> {
+        url(URLs.Join.url)
+        contentType(ContentType.Application.Json)
+        body = Join(session.token, session.uuid, serverID)
+    }.status == HttpStatusCode.NoContent
+}

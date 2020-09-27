@@ -67,6 +67,12 @@ data class Session(
     val token: String
 )
 
+data class Join(
+    val accessToken: String,
+    val selectedProfile: String,
+    val serverID: String
+)
+
 data class AccountProfile(
     val id: String = "",
     val email: String = "",

@@ -11,9 +11,10 @@ version = "0.0.1"
 repositories {
     mavenCentral()
     jcenter()
+    maven("https://jitpack.io")
     maven("https://dl.bintray.com/kotlin/ktor")
     maven("https://dl.bintray.com/kotlin/kotlinx")
-    maven("https://jitpack.io")
+    maven("https://repo1.maven.org/maven2/org/bouncycastle")
 }
 dependencies {
     implementation("io.ktor:ktor-jackson:1.4.0")
@@ -23,10 +24,11 @@ dependencies {
     implementation("io.ktor:ktor-client-apache:1.4.0")
     implementation("io.ktor:ktor-client-jackson:1.4.0")
     implementation("io.ktor:ktor-client-logging:1.4.0")
+    implementation("org.bouncycastle:bcprov-jdk14:1.65")
+    implementation("com.github.wnuke:kt-mc-packet:v0.2.0")
     implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.0.0-RC2")
-    implementation("com.github.DevSrSouza.kt-mc-packet:kt-mc-packet:a7f9999a71")
 }
 tasks.withType<KotlinCompile>() {
     kotlinOptions.jvmTarget = "14"
