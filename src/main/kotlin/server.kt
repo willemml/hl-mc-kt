@@ -31,5 +31,4 @@ suspend fun main() {
             }
         }
     }.start(wait = false)
-    protocolTest()
 }

@@ -1,4 +1,4 @@
-package mojang
+package minecraft.mojang
 
 import io.ktor.client.*
 import io.ktor.client.engine.apache.*
@@ -20,11 +20,11 @@ val client = HttpClient(Apache) {
 }
 
 enum class URLs(val url: String) {
-    Join("https://sessionserver.mojang.com/session/minecraft/join"),
-    Login("https://authserver.mojang.com/authenticate"),
-    Refresh("https://authserver.mojang.com/refresh"),
-    Validate("https://authserver.mojang.com/validate"),
-    SignOut("https://authserver.mojang.com/signout")
+    Join("https://sessionserver.minecraft.mojang.com/session/minecraft/join"),
+    Login("https://authserver.minecraft.mojang.com/authenticate"),
+    Refresh("https://authserver.minecraft.mojang.com/refresh"),
+    Validate("https://authserver.minecraft.mojang.com/validate"),
+    SignOut("https://authserver.minecraft.mojang.com/signout")
 }
 
 suspend fun login(username: String, password: String): Profile {

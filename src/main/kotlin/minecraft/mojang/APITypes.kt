@@ -1,4 +1,4 @@
-package mojang
+package minecraft.mojang
 
 import randomAlphanumeric
 
@@ -45,7 +45,9 @@ data class Profile(
     val availableProfiles: Array<UserProfile>? = null,
     val selectedProfile: UserProfile,
     val user: AccountProfile? = null
-)
+) {
+    fun getSession(): Session = Session(selectedProfile.name, selectedProfile.id, accessToken)
+}
 
 data class UserProfile(
     val agent: String = "",
@@ -57,6 +59,12 @@ data class UserProfile(
     val paid: Boolean = true,
     val migrated: Boolean = false,
     val legacy: Boolean = false
+)
+
+data class Session(
+    val name: String,
+    val uuid: String,
+    val token: String
 )
 
 data class AccountProfile(

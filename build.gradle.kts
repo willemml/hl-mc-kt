@@ -11,12 +11,8 @@ version = "0.0.1"
 repositories {
     mavenCentral()
     jcenter()
-    maven {
-        url = uri("https://dl.bintray.com/kotlin/ktor")
-    }
-    maven {
-        url = uri("https://dl.bintray.com/kotlin/kotlinx")
-    }
+    maven("https://dl.bintray.com/kotlin/ktor")
+    maven("https://dl.bintray.com/kotlin/kotlinx")
     maven("https://jitpack.io")
 }
 dependencies {
