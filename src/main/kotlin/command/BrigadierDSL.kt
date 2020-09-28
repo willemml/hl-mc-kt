@@ -152,16 +152,6 @@ fun CommandNode<*>.getAllArguments(): ArrayList<String> {
     for (child in children) {
         for (arg in child.getAllArguments()) list.add("$usageText $arg")
     }
-    if (list.isEmpty()) list.add(usageText)
+    if (command != null) list.add(usageText)
     return list
-}
-
-fun minecraft.bot.Command<*>.getUsageList(): String {
-    var text = "Usage: "
-    if (arguments.isEmpty()) {
-        text += literal
-        return text
-    }
-    for (arg in arguments) text += arg.getAllArguments().joinToString(separator = "") { "\n - $literal $it" }
-    return text
 }

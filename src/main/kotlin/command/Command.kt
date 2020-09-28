@@ -4,13 +4,25 @@ import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.builder.LiteralArgumentBuilder
 import com.mojang.brigadier.exceptions.CommandSyntaxException
 import command.from
-import command.getUsageList
+import command.getAllArguments
 import command.runs
 import command.string
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 
-open class Command<T : Message>(name: String, val description: String = "") : LiteralArgumentBuilder<Cmd<T>>(name)
+open class Command<T : Message>(name: String, val description: String = "") : LiteralArgumentBuilder<Cmd<T>>(name) {
+    private var usageCache = ""
+    fun getUsageList(): String {
+        if (usageCache.isEmpty()) {
+            var text = "Usage: "
+            if (arguments.isEmpty()) {
+                text += literal
+                return text
+            }
+            for (arg in arguments) text += arg.getAllArguments().joinToString(separator = "") { "\n - $literal $it" }
+            usageCache = text
+        }
+        return usageCache
+    }
+}
 
 class Help<T : Message>(commandManager: CommandManager<T>) : Command<T>("help", "List available commands and get their usages.") {
     init {
@@ -18,6 +30,8 @@ class Help<T : Message>(commandManager: CommandManager<T>) : Command<T>("help", 
             runs { context ->
                 val name: String = "name" from context
                 if (commandManager.commandExists(name)) {
+                    val desc = commandManager.commandDesc(name)
+                    info("$name${if (desc != null && desc.isNotEmpty()) ": $desc" else ""}")
                     commandManager.commandHelp(name)?.let { info(it) }
                 } else {
                     error("No command with name \"$name\".")
@@ -44,7 +58,7 @@ class Cmd<T : Message> {
     }
 
     fun execute(message: T) {
-        for (action in actions) GlobalScope.launch { action.invoke(message) }
+        for (action in actions) action.invoke(message)
     }
 }
 
@@ -71,12 +85,13 @@ class CommandManager<T : Message>(private val dispatcher: CommandDispatcher<Cmd<
 
     fun commandHelp(name: String) = commands[name]?.getUsageList()
 
+    fun commandDesc(name: String) = commands[name]?.description
+
     fun executeCommand(cause: T) {
         if (cause.message.isNotEmpty()) {
             val command = Cmd<T>()
             try {
                 dispatcher.execute(cause.message, command)
-                println(dispatcher.getAllUsage(dispatcher.root, command, false))
                 command.execute(cause)
             } catch (_: CommandSyntaxException) {
                 val commandName = cause.message.split(" ")[0]
