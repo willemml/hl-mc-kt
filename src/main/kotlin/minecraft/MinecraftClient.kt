@@ -14,38 +14,40 @@ import com.github.steveice10.packetlib.event.session.SessionAdapter
 import com.github.steveice10.packetlib.packet.Packet
 import com.github.steveice10.packetlib.tcp.TcpSessionFactory
 import kotlinx.coroutines.delay
+import randomAlphanumeric
 import java.util.*
 
-open class MinecraftClient(val address: String, val port: Int, val protocol: MinecraftProtocol) {
-    private val client = Client(address, port, protocol, TcpSessionFactory())
+open class MinecraftClient(
+    val address: String,
+    val port: Int = 25565,
+    val protocol: MinecraftProtocol = MinecraftProtocol(randomAlphanumeric(8)),
+    tcpSessionFactory: TcpSessionFactory = TcpSessionFactory(),
+    var connectionLogs: Boolean = true,
+    var chatLogs: Boolean = true
+) {
+    private val client = Client(address, port, protocol, tcpSessionFactory)
 
     private var joined = false
 
     init {
         client.session.addListener(object : SessionAdapter() {
             override fun connected(event: ConnectedEvent?) {
-                println("$address:$port Connected.")
+                if (connectionLogs) println("$address:$port Connected.")
             }
 
             override fun packetReceived(event: PacketReceivedEvent?) {
                 when (event?.getPacket<Packet>()) {
                     is ServerJoinGamePacket -> {
-                        println("$address:$port Joined.")
                         joined = true
                         onJoin(event.getPacket())
                     }
                     is ServerChatPacket -> {
                         val packet = event.getPacket<ServerChatPacket>()
-                        when (packet.type) {
-                            MessageType.CHAT -> {
-                                val message = MessageSerializer.toJson(packet.message).asJsonObject.getAsJsonArray("with").last().asString
-                                if (packet.senderUuid != protocol.profile.id) {
-                                    println("$address:$port sent \"$message\" from ${packet.senderUuid}.")
-                                    onChat(message, packet.senderUuid)
-                                }
-                            }
-                            else -> {
-                                println("$address:$port message: \"${packet.message}\"")
+                        if (packet.type == MessageType.CHAT) {
+                            val message = MessageSerializer.toJson(packet.message).asJsonObject.getAsJsonArray("with").last().asString
+                            if (packet.senderUuid != protocol.profile.id) {
+                                if (chatLogs) println("[$address:$port]${packet.senderUuid} > $message")
+                                onChat(message, packet.senderUuid)
                             }
                         }
                     }
@@ -53,7 +55,7 @@ open class MinecraftClient(val address: String, val port: Int, val protocol: Min
             }
 
             override fun disconnected(event: DisconnectedEvent?) {
-                println("$address:$port Disconnected, reason: ${event?.reason}")
+                if (connectionLogs) println("$address:$port Disconnected, reason: ${event?.reason}")
                 joined = false
                 onLeave(event ?: return)
             }
@@ -61,7 +63,7 @@ open class MinecraftClient(val address: String, val port: Int, val protocol: Min
     }
 
     suspend fun connect(): MinecraftClient {
-        println("$address:$port Connecting...")
+        if (connectionLogs) println("$address:$port Connecting...")
         client.session.connect()
         while (!joined) {
             delay(5)
@@ -71,14 +73,13 @@ open class MinecraftClient(val address: String, val port: Int, val protocol: Min
     }
 
     fun disconnect(): MinecraftClient {
-        println("$address:$port Disconnecting...")
+        if (connectionLogs) println("$address:$port Disconnecting...")
         client.session.disconnect("Leaving...")
         return this
     }
 
     fun sendMessage(message: String): MinecraftClient {
         client.session.send(ClientChatPacket(message))
-        println("$address:$port sent \"$message\" as ${protocol.profile.name}")
         return this
     }
 
@@ -86,3 +87,5 @@ open class MinecraftClient(val address: String, val port: Int, val protocol: Min
     open fun onLeave(event: DisconnectedEvent) {}
     open fun onChat(message: String, sender: UUID) {}
 }
+
+class MessageEvent(val client: MinecraftClient, val message: String, val sender: UUID)
