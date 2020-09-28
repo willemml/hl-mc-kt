@@ -1,37 +1,48 @@
 package minecraft.bot
 
+import com.github.steveice10.mc.protocol.data.message.style.ChatColor
 import com.mojang.brigadier.CommandDispatcher
-import com.mojang.brigadier.exceptions.CommandSyntaxException
 import minecraft.ClientConfig
 import minecraft.MinecraftClient
 import minecraft.bot.commands.Echo
 import java.util.*
 
 class ChatBot(clientConfig: ClientConfig = ClientConfig(), private val commandPrefix: String = "!") : MinecraftClient(clientConfig) {
-    private val dispatcher = CommandDispatcher<Cmd<ChatMessage>>()
-    private val commandManager = CommandManager<ChatMessage>()
-
-    init {
-        commandManager.loadCommands(hashSetOf(Echo()))
-        commandManager.registerCommands(dispatcher)
-    }
+    private val commandManager = CommandManager(CommandDispatcher<Cmd<ChatMessage>>()).apply { loadCommands(hashSetOf(Echo())) }
 
     override fun onChat(message: String, sender: UUID) {
         if (message.startsWith(commandPrefix) || commandPrefix.isEmpty()) {
-            val commandString = message.removePrefix(commandPrefix)
-            val event = ChatMessage(message, sender, this)
-            val command = Cmd<ChatMessage>()
-            try {
-                dispatcher.execute(commandString, command)
-                command.execute(event)
-            } catch (_: CommandSyntaxException) {
-                println("Command failed to execute: $command")
-                if (commandManager.commandExists(commandString.split(" ")[0])) {
-                    sendMessage("Invalid syntax!")
-                }
-            }
+            val cause = ChatMessage(message.removePrefix(commandPrefix), sender, this)
+            commandManager.executeCommand(cause)
         }
     }
 }
 
-class ChatMessage(message: String, val sender: UUID, val client: MinecraftClient) : Message(message)
+class ChatMessage(message: String, val sender: UUID, val client: MinecraftClient) : Message(message) {
+    override fun info(message: String) {
+        client.sendMessage(message)
+    }
+
+    override fun error(message: String) {
+        client.sendMessage("${ChatColor.RED}Error: $message")
+    }
+
+    override fun success(message: String) {
+        client.sendMessage("${ChatColor.GREEN}Success: $message")
+    }
+}
+
+class WhisperMessage(message: String, val sender: UUID, val client: MinecraftClient) : Message(message) {
+    override fun info(message: String) {
+        client.sendMessage("/msg $sender $message")
+    }
+
+    override fun error(message: String) {
+        client.sendMessage("/msg $sender ${ChatColor.RED}Error: $message")
+    }
+
+    override fun success(message: String) {
+        client.sendMessage("/msg $sender ${ChatColor.GREEN}Success: $message")
+    }
+
+}

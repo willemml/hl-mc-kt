@@ -1,15 +1,15 @@
+
 import cli.CLI
 import io.ktor.util.*
 import kotlinx.serialization.InternalSerializationApi
-import minecraft.clientTest
 import kotlin.random.Random
 
 @ExperimentalUnsignedTypes
 @KtorExperimentalAPI
 @InternalSerializationApi
 fun main() {
-    server()
-    clientTest()
+    //server()
+    //clientTest()
     CLI()
 }
 

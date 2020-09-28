@@ -32,7 +32,12 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.0.0-RC2")
 }
-tasks.withType<KotlinCompile>() {
+
+val run: JavaExec by tasks.getting(JavaExec::class) {
+    standardInput = System.`in`
+}
+
+tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "14"
 }
 application {

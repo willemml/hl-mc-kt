@@ -6,6 +6,7 @@ import com.mojang.brigadier.builder.ArgumentBuilder
 import com.mojang.brigadier.builder.LiteralArgumentBuilder
 import com.mojang.brigadier.builder.RequiredArgumentBuilder
 import com.mojang.brigadier.context.CommandContext
+import com.mojang.brigadier.tree.CommandNode
 import minecraft.bot.Cmd
 import minecraft.bot.Message
 
@@ -145,3 +146,22 @@ infix fun <T: Message> ArgumentBuilder<Cmd<T>, *>.runs(action: T.(CommandContext
         }
         0
     }
+
+fun CommandNode<*>.getAllArguments(): ArrayList<String> {
+    val list = ArrayList<String>()
+    for (child in children) {
+        for (arg in child.getAllArguments()) list.add("$usageText $arg")
+    }
+    if (list.isEmpty()) list.add(usageText)
+    return list
+}
+
+fun minecraft.bot.Command<*>.getUsageList(): String {
+    var text = "Usage: "
+    if (arguments.isEmpty()) {
+        text += literal
+        return text
+    }
+    for (arg in arguments) text += arg.getAllArguments().joinToString(separator = "") { "\n - $literal $it" }
+    return text
+}
