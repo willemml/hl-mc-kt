@@ -8,6 +8,6 @@ fun clientTest() {
     GlobalScope.launch {
         val client = ChatBot()
         client.connect()
-        client.sendMessage("Hello command.from hl-mc-kt!")
+        client.sendMessage("Hello from hl-mc-kt!")
     }
 }
