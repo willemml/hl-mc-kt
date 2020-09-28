@@ -9,4 +9,6 @@ The goal is to have full chat support, movement support (for pathing), support f
 #### Credits
  - Steveice10's [MCProtocolLib](https://github.com/Steveice10/MCProtocolLib) for saving me lots of time.
  - zeroeightysix's [BirgadierDsl](https://gist.github.com/zeroeightysix/cc982cc0526e9a367d7f42a1dd8c354e) for making it easy to use Brigadier.
- - Mojang's [Brigadier](https://github.com/Mojang/brigadier) for being an excellent command/argument parser
+ - Mojang's [Brigadier](https://github.com/Mojang/brigadier) for being an excellent command/argument parser.
+ - Tea-Ayataka's [Kordis](https://github.com/Tea-Ayataka/Kordis) for making it easy to interact with the Discord API.
+ - kami-blue's [bot-kt](https://github.com/kami-blue/bot-kt) for inspiration for listing dependencies so I could use them to build this.
