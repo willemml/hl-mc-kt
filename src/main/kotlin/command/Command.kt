@@ -7,6 +7,8 @@ import command.from
 import command.getAllArguments
 import command.runs
 import command.string
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 open class Command<T : Message>(name: String, val description: String = "") : LiteralArgumentBuilder<Cmd<T>>(name) {
     private var usageCache = ""
@@ -31,8 +33,8 @@ class Help<T : Message>(commandManager: CommandManager<T>) : Command<T>("help", 
                 val name: String = "name" from context
                 if (commandManager.commandExists(name)) {
                     val desc = commandManager.commandDesc(name)
-                    info("$name${if (desc != null && desc.isNotEmpty()) ": $desc" else ""}")
-                    commandManager.commandHelp(name)?.let { info(it) }
+                    val use = "$name${if (desc != null && desc.isNotEmpty()) ": $desc" else ""}"
+                    commandManager.commandHelp(name)?.let { info("$use\n$it") }
                 } else {
                     error("No command with name \"$name\".")
                 }
@@ -45,6 +47,9 @@ class Help<T : Message>(commandManager: CommandManager<T>) : Command<T>("help", 
 }
 
 abstract class Message(val message: String) {
+    open suspend fun plain(message: String) {
+        info(message)
+    }
     abstract fun info(message: String)
     abstract fun error(message: String)
     abstract fun success(message: String)
@@ -58,7 +63,7 @@ class Cmd<T : Message> {
     }
 
     fun execute(message: T) {
-        for (action in actions) action.invoke(message)
+        for (action in actions) GlobalScope.launch { action.invoke(message) }
     }
 }
 

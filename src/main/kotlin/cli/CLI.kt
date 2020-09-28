@@ -1,22 +1,26 @@
 package cli
 
-import cli.commands.LaunchInstance
+import cli.commands.LaunchChatBot
+import cli.commands.LaunchDiscordBot
 import com.mojang.brigadier.CommandDispatcher
+import discord.Discord
 import minecraft.MinecraftClient
 import minecraft.bot.Cmd
 import minecraft.bot.CommandManager
 import minecraft.bot.Message
 
 class CLI {
-    val instances = HashMap<String, MinecraftClient>()
+    val mcClients = HashMap<String, MinecraftClient>()
+    val discordBots = HashMap<String, Discord>()
 
-    private val commandManager = CommandManager(CommandDispatcher<Cmd<CLIMessage>>()).apply { loadCommands(hashSetOf(LaunchInstance())) }
+    private val commandManager =
+        CommandManager(CommandDispatcher<Cmd<CLIMessage>>()).apply { loadCommands(hashSetOf(LaunchChatBot(), LaunchDiscordBot())) }
 
     init {
         while (true) {
             print("hl-mc-kt > ")
             val commandString = readLine()
-            commandString?.let { commandManager.executeCommand(CLIMessage(commandString, this)) }
+            commandString?.let { commandManager.executeCommand(CLIMessage(commandString, this@CLI)) }
         }
     }
 }

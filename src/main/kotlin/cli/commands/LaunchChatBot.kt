@@ -6,11 +6,12 @@ import command.from
 import command.integer
 import command.runs
 import command.string
+import kotlinx.coroutines.runBlocking
 import minecraft.ClientConfig
-import minecraft.MinecraftClient
+import minecraft.bot.ChatBot
 import minecraft.bot.Command
 
-class LaunchInstance : Command<CLIMessage>("launch", "Launch instances of the Minecraft client.") {
+class LaunchChatBot : Command<CLIMessage>("launchcb", "Launch instances of the Chat Bot") {
     init {
         string("name") {
             string("host") {
@@ -20,7 +21,7 @@ class LaunchInstance : Command<CLIMessage>("launch", "Launch instances of the Mi
                             runs {context ->
                                 val username: String = "username" from context
                                 val password: String = "password" from context
-                                cli.instances["name" from context] = MinecraftClient(ClientConfig("host" from context, "port" from context, MinecraftProtocol(username, password)))
+                                cli.mcClients["name" from context] = ChatBot(ClientConfig("host" from context, "port" from context, MinecraftProtocol(username, password))).apply { runBlocking { connect() } }
                                 success("instance created")
                             }
                         }
