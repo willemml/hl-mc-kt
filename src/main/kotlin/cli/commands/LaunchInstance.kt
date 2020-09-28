@@ -21,14 +21,11 @@ class LaunchInstance : Command<CLIMessage>("launch") {
                                 val username: String = "username" from context
                                 val password: String = "password" from context
                                 cli.instances["name" from context] = MinecraftClient(ClientConfig("host" from context, "port" from context, MinecraftProtocol(username, password)))
-                                println("Created.")
+                                success("instance created")
                             }
                         }
                     }
                 }
-            }
-            integer("test") {
-
             }
         }
     }

@@ -11,7 +11,7 @@ class Echo : Command<ChatMessage>("echo") {
         greedyString("message") {
             runs {context ->
                 val message: String = "message" from context
-                client.sendMessage(message)
+                info(message)
             }
         }
     }
