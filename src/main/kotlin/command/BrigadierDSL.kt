@@ -1,11 +1,13 @@
+package command
+
 import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.arguments.*
 import com.mojang.brigadier.builder.ArgumentBuilder
 import com.mojang.brigadier.builder.LiteralArgumentBuilder
 import com.mojang.brigadier.builder.RequiredArgumentBuilder
 import com.mojang.brigadier.context.CommandContext
-import minecraft.MessageEvent
 import minecraft.bot.Cmd
+import minecraft.bot.Message
 
 @DslMarker
 @Target(AnnotationTarget.TYPE)
@@ -20,10 +22,10 @@ fun <T> rootLiteral(name: String, block: (@BrigadierDsl LiteralArgumentBuilder<T
     LiteralArgumentBuilder.literal<T>(name).also(block)
 
 /**
- * Appends a new [literal](LiteralArgumentBuilder) to `this` [ArgumentBuilder].
+ * Appends a new [command.literal](LiteralArgumentBuilder) to `this` [ArgumentBuilder].
  *
- * @param name the name of the literal argument
- * @param block the receiver function for further construction of the literal argument
+ * @param name the name of the command.literal argument
+ * @param block the receiver function for further construction of the command.literal argument
  */
 fun <T> ArgumentBuilder<T, *>.literal(name: String, block: (@BrigadierDsl LiteralArgumentBuilder<T>).() -> Unit) =
     then(rootLiteral(name, block))
@@ -54,7 +56,7 @@ fun <S, T : ArgumentBuilder<S, T>> ArgumentBuilder<S, T>.bool(
     argument(name, BoolArgumentType.bool(), block)
 
 /**
- * A shorthand for appending a double required argument to `this` [ArgumentBuilder]
+ * A shorthand for appending a command.double required argument to `this` [ArgumentBuilder]
  *
  * @see argument
  */
@@ -65,7 +67,7 @@ fun <S, T : ArgumentBuilder<S, T>> ArgumentBuilder<S, T>.double(
     argument(name, DoubleArgumentType.doubleArg(), block)
 
 /**
- * A shorthand for appending a float required argument to `this` [ArgumentBuilder]
+ * A shorthand for appending a command.float required argument to `this` [ArgumentBuilder]
  *
  * @see argument
  */
@@ -76,7 +78,7 @@ fun <S, T : ArgumentBuilder<S, T>> ArgumentBuilder<S, T>.float(
     argument(name, FloatArgumentType.floatArg(), block)
 
 /**
- * A shorthand for appending a integer required argument to `this` [ArgumentBuilder]
+ * A shorthand for appending a command.integer required argument to `this` [ArgumentBuilder]
  *
  * @see argument
  */
@@ -87,7 +89,7 @@ fun <S, T : ArgumentBuilder<S, T>> ArgumentBuilder<S, T>.integer(
     argument(name, IntegerArgumentType.integer(), block)
 
 /**
- * A shorthand for appending a `long` required argument to `this` [ArgumentBuilder]
+ * A shorthand for appending a `command.long` required argument to `this` [ArgumentBuilder]
  *
  * @see argument
  */
@@ -98,7 +100,7 @@ fun <S, T : ArgumentBuilder<S, T>> ArgumentBuilder<S, T>.long(
     argument(name, LongArgumentType.longArg(), block)
 
 /**
- * A shorthand for appending a string required argument to `this` [ArgumentBuilder]
+ * A shorthand for appending a command.string required argument to `this` [ArgumentBuilder]
  *
  * @see argument
  */
@@ -109,7 +111,7 @@ fun <S, T : ArgumentBuilder<S, T>> ArgumentBuilder<S, T>.string(
     argument(name, StringArgumentType.string(), block)
 
 /**
- * A shorthand for appending a greedy string required argument to `this` [ArgumentBuilder]
+ * A shorthand for appending a greedy command.string required argument to `this` [ArgumentBuilder]
  *
  * @see argument
  */
@@ -136,7 +138,7 @@ inline infix fun <reified R, S> String.from(ctx: CommandContext<S>) = ctx.getArg
 /**
  * Shorthand for [runs] with an empty [now] handler that always returns `0`.
  */
-infix fun ArgumentBuilder<Cmd, *>.runs(action: MessageEvent.(CommandContext<Cmd>) -> Unit) =
+infix fun <T: Message> ArgumentBuilder<Cmd<T>, *>.runs(action: T.(CommandContext<Cmd<T>>) -> Unit) =
     does { context ->
         context.source runs {
             action(this, context)

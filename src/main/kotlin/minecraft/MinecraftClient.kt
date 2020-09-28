@@ -17,22 +17,26 @@ import kotlinx.coroutines.delay
 import randomAlphanumeric
 import java.util.*
 
-open class MinecraftClient(
-    val address: String,
+data class ClientConfig(
+    val address: String = "127.0.0.1",
     val port: Int = 25565,
     val protocol: MinecraftProtocol = MinecraftProtocol(randomAlphanumeric(8)),
-    tcpSessionFactory: TcpSessionFactory = TcpSessionFactory(),
+    val tcpSessionFactory: TcpSessionFactory = TcpSessionFactory(),
     var connectionLogs: Boolean = true,
     var chatLogs: Boolean = true
-) {
-    private val client = Client(address, port, protocol, tcpSessionFactory)
+)
+
+open class MinecraftClient(val config: ClientConfig = ClientConfig()) {
+    private val client = Client(config.address, config.port, config.protocol, config.tcpSessionFactory)
 
     private var joined = false
+
+    private val hostPort = "${config.address}:${config.port}"
 
     init {
         client.session.addListener(object : SessionAdapter() {
             override fun connected(event: ConnectedEvent?) {
-                if (connectionLogs) println("$address:$port Connected.")
+                if (config.connectionLogs) println("$hostPort Connected.")
             }
 
             override fun packetReceived(event: PacketReceivedEvent?) {
@@ -44,9 +48,10 @@ open class MinecraftClient(
                     is ServerChatPacket -> {
                         val packet = event.getPacket<ServerChatPacket>()
                         if (packet.type == MessageType.CHAT) {
-                            val message = MessageSerializer.toJson(packet.message).asJsonObject.getAsJsonArray("with").last().asString
-                            if (packet.senderUuid != protocol.profile.id) {
-                                if (chatLogs) println("[$address:$port]${packet.senderUuid} > $message")
+                            val message = MessageSerializer.toJson(packet.message).asJsonObject.getAsJsonArray("with")
+                                .last().asString
+                            if (packet.senderUuid != config.protocol.profile.id) {
+                                if (config.chatLogs) println("[$hostPort]${packet.senderUuid} > $message")
                                 onChat(message, packet.senderUuid)
                             }
                         }
@@ -55,7 +60,7 @@ open class MinecraftClient(
             }
 
             override fun disconnected(event: DisconnectedEvent?) {
-                if (connectionLogs) println("$address:$port Disconnected, reason: ${event?.reason}")
+                if (config.connectionLogs) println("$hostPort Disconnected, reason: ${event?.reason}")
                 joined = false
                 onLeave(event ?: return)
             }
@@ -63,7 +68,7 @@ open class MinecraftClient(
     }
 
     suspend fun connect(): MinecraftClient {
-        if (connectionLogs) println("$address:$port Connecting...")
+        if (config.connectionLogs) println("$hostPort Connecting...")
         client.session.connect()
         while (!joined) {
             delay(5)
@@ -73,7 +78,7 @@ open class MinecraftClient(
     }
 
     fun disconnect(): MinecraftClient {
-        if (connectionLogs) println("$address:$port Disconnecting...")
+        if (config.connectionLogs) println("$hostPort Disconnecting...")
         client.session.disconnect("Leaving...")
         return this
     }
@@ -87,5 +92,3 @@ open class MinecraftClient(
     open fun onLeave(event: DisconnectedEvent) {}
     open fun onChat(message: String, sender: UUID) {}
 }
-
-class MessageEvent(val client: MinecraftClient, val message: String, val sender: UUID)

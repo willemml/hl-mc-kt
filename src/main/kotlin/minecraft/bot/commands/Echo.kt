@@ -1,11 +1,12 @@
 package minecraft.bot.commands
 
-import from
-import greedyString
+import command.from
+import command.greedyString
+import command.runs
+import minecraft.bot.ChatMessage
 import minecraft.bot.Command
-import runs
 
-class Echo : Command("echo") {
+class Echo : Command<ChatMessage>("echo") {
     init {
         greedyString("message") {
             runs {context ->

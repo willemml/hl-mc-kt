@@ -13,7 +13,7 @@ fun HTML.index() {
     }
     body {
         div {
-            +"Hello from Ktor in hl-mc-kt!"
+            +"Hello command.from Ktor in hl-mc-kt!"
         }
     }
 }
