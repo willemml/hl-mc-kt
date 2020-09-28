@@ -12,6 +12,7 @@ repositories {
     mavenCentral()
     jcenter()
     maven("https://jitpack.io")
+    maven("https://libraries.minecraft.net")
     maven("https://dl.bintray.com/kotlin/ktor")
     maven("https://dl.bintray.com/kotlin/kotlinx")
     maven("https://repo1.maven.org/maven2/org/bouncycastle")
@@ -19,6 +20,7 @@ repositories {
 dependencies {
     implementation("io.ktor:ktor-jackson:1.4.0")
     implementation("io.ktor:ktor-network:1.4.0")
+    implementation("com.mojang:brigadier:1.0.17")
     implementation("io.ktor:ktor-server-jetty:1.4.0")
     implementation("io.ktor:ktor-html-builder:1.4.0")
     implementation("io.ktor:ktor-client-apache:1.4.0")
@@ -34,5 +36,5 @@ tasks.withType<KotlinCompile>() {
     kotlinOptions.jvmTarget = "14"
 }
 application {
-    mainClassName = "ServerKt"
+    mainClassName = "MainKt"
 }

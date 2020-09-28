@@ -5,10 +5,7 @@ import io.ktor.http.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.jetty.*
-import io.ktor.util.*
 import kotlinx.html.*
-import kotlinx.serialization.InternalSerializationApi
-import minecraft.protocolTest
 
 fun HTML.index() {
     head {
@@ -21,10 +18,7 @@ fun HTML.index() {
     }
 }
 
-@InternalSerializationApi
-@KtorExperimentalAPI
-@ExperimentalUnsignedTypes
-fun main() {
+fun server() {
     embeddedServer(Jetty, port = 8080, host = "127.0.0.1") {
         routing {
             get("/") {
@@ -32,5 +26,4 @@ fun main() {
             }
         }
     }.start(wait = false)
-    protocolTest()
 }
