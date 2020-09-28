@@ -43,16 +43,3 @@ class CommandManager() {
         }
     }
 }
-
-annotation class MessageCommand
-
-/**
- * Shorthand for [runs] with an empty [now] handler that always returns `0`.
- */
-infix fun ArgumentBuilder<Cmd, *>.runs(action: MessageEvent.(CommandContext<Cmd>) -> Unit) =
-    does { context ->
-        context.source runs {
-            action(this, context)
-        }
-        0
-    }
