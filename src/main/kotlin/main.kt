@@ -1,3 +1,4 @@
+import cli.CLI
 import io.ktor.util.*
 import kotlinx.serialization.InternalSerializationApi
 import minecraft.clientTest
@@ -9,6 +10,7 @@ import kotlin.random.Random
 fun main() {
     server()
     clientTest()
+    CLI()
 }
 
 const val alphanumeric = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
