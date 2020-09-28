@@ -22,7 +22,7 @@ fun clientTest() {
                 if (message.startsWith(prefix)) {
                     val commandString = message.removePrefix(prefix)
                     val event = MessageEvent(this, message, sender)
-                    val command = Cmd(event)
+                    val command = Cmd()
                     try {
                         dispatcher.execute(commandString, command)
                         command.execute(event)

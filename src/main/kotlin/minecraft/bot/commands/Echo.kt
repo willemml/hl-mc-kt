@@ -3,7 +3,7 @@ package minecraft.bot.commands
 import from
 import greedyString
 import minecraft.bot.Command
-import minecraft.bot.runs
+import runs
 
 class Echo : Command("echo") {
     init {

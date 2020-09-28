@@ -1,10 +1,7 @@
 package minecraft.bot
 
 import com.mojang.brigadier.CommandDispatcher
-import com.mojang.brigadier.builder.ArgumentBuilder
 import com.mojang.brigadier.builder.LiteralArgumentBuilder
-import com.mojang.brigadier.context.CommandContext
-import does
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import minecraft.MessageEvent
@@ -13,7 +10,7 @@ import minecraft.bot.commands.Echo
 open class Command(name: String) : LiteralArgumentBuilder<Cmd>(name) {
 }
 
-class Cmd(event: MessageEvent) {
+class Cmd {
     private val actions = ArrayList<MessageEvent.() -> Unit>()
 
     infix fun runs(action: MessageEvent.() -> Unit) {
