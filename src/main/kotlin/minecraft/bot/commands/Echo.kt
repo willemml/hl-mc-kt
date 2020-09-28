@@ -6,7 +6,7 @@ import command.runs
 import minecraft.bot.ChatMessage
 import minecraft.bot.Command
 
-class Echo : Command<ChatMessage>("echo") {
+class Echo : Command<ChatMessage>("echo", "Repeat the argument.") {
     init {
         greedyString("message") {
             runs {context ->

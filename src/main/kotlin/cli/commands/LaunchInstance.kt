@@ -10,7 +10,7 @@ import minecraft.ClientConfig
 import minecraft.MinecraftClient
 import minecraft.bot.Command
 
-class LaunchInstance : Command<CLIMessage>("launch") {
+class LaunchInstance : Command<CLIMessage>("launch", "Launch instances of the Minecraft client.") {
     init {
         string("name") {
             string("host") {
