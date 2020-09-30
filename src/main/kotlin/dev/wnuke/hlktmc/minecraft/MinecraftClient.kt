@@ -1,4 +1,4 @@
-package minecraft
+package dev.wnuke.hlktmc.minecraft
 
 import com.github.steveice10.mc.protocol.MinecraftProtocol
 import com.github.steveice10.mc.protocol.data.game.MessageType
@@ -18,10 +18,10 @@ import randomAlphanumeric
 import java.util.*
 
 data class ClientConfig(
-    val address: String = "127.0.0.1",
-    val port: Int = 25565,
-    val protocol: MinecraftProtocol = MinecraftProtocol(randomAlphanumeric(8)),
-    val tcpSessionFactory: TcpSessionFactory = TcpSessionFactory(),
+    var address: String = "127.0.0.1",
+    var port: Int = 25565,
+    var protocol: MinecraftProtocol = MinecraftProtocol(randomAlphanumeric(8)),
+    var tcpSessionFactory: TcpSessionFactory = TcpSessionFactory(),
     var connectionLogs: Boolean = true,
     var chatLogs: Boolean = true
 )

@@ -1,8 +1,8 @@
-package minecraft
+package dev.wnuke.hlktmc.minecraft
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import minecraft.bot.ChatBot
+import dev.wnuke.hlktmc.minecraft.bot.ChatBot
 
 fun clientTest() {
     GlobalScope.launch {

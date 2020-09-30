@@ -12,16 +12,16 @@ repositories {
     mavenCentral()
     jcenter()
     maven("https://jitpack.io")
-    maven("https://libraries.minecraft.net")
+    maven("https://libraries.dev.wnuke.hlktmc.minecraft.net")
     maven("https://dl.bintray.com/kotlin/ktor")
     maven("https://dl.bintray.com/kotlin/kotlinx")
     maven("https://repo1.maven.org/maven2/org/bouncycastle")
 }
 dependencies {
+    implementation("dev.wnuke:kt-cmd:v1.2.2")
+    implementation("org.slf4j:slf4j-nop:1.7.9")
     implementation("io.ktor:ktor-jackson:1.4.0")
     implementation("io.ktor:ktor-network:1.4.0")
-    implementation("com.mojang:brigadier:1.0.17")
-    implementation("org.slf4j:slf4j-nop:1.7.9")
     implementation("io.ktor:ktor-server-jetty:1.4.0")
     implementation("io.ktor:ktor-html-builder:1.4.0")
     implementation("io.ktor:ktor-client-apache:1.4.0")
@@ -39,8 +39,9 @@ val run: JavaExec by tasks.getting(JavaExec::class) {
 }
 
 tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "14"
+    kotlinOptions.jvmTarget = "1.8"
 }
+
 application {
     mainClassName = "MainKt"
 }

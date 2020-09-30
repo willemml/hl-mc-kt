@@ -43,7 +43,7 @@ set JAVA_EXE=java.exe
 if "%ERRORLEVEL%" == "0" goto init
 
 echo.
-echo ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH.
+echo ERROR: JAVA_HOME is not set and no 'java' dev.wnuke.hlktmc.command could be found in your PATH.
 echo.
 echo Please set the JAVA_HOME variable in your environment to match the
 echo location of your Java installation.
@@ -65,12 +65,12 @@ echo location of your Java installation.
 goto fail
 
 :init
-@rem Get command-line arguments, handling Windows variants
+@rem Get dev.wnuke.hlktmc.command-line arguments, handling Windows variants
 
 if not "%OS%" == "Windows_NT" goto win9xME_args
 
 :win9xME_args
-@rem Slurp the command line arguments.
+@rem Slurp the dev.wnuke.hlktmc.command line arguments.
 set CMD_LINE_ARGS=
 set _SKIP=2
 
@@ -80,7 +80,7 @@ if "x%~1" == "x" goto execute
 set CMD_LINE_ARGS=%*
 
 :execute
-@rem Setup the command line
+@rem Setup the dev.wnuke.hlktmc.command line
 
 set CLASSPATH=%APP_HOME%\gradle\wrapper\gradle-wrapper.jar
 

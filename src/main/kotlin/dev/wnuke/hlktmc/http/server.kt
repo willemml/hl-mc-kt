@@ -13,7 +13,8 @@ fun HTML.index() {
     }
     body {
         div {
-            +"Hello command.from Ktor in hl-mc-kt!"
+            +"Hello from Ktor in hl-mc-kt!"
+            +"This will eventually be a REST API, possibly also a web UI."
         }
     }
 }
