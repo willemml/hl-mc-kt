@@ -6,13 +6,13 @@ import dev.wnuke.hlktmc.minecraft.ClientConfig
 import dev.wnuke.hlktmc.minecraft.bot.ChatBot
 import dev.wnuke.ktcmd.Command
 
-val launchChatBot = Command<CLIMessage>("launchcb", "Launches an instance of Minecraft chat bot") {
+val launchChatBot = Command<CLIMessage>("launchcb", "Launches an instance of Minecraft chat bot.") {
     (getArgument("name") as String?)?.let { name ->
         val config = ClientConfig()
-        (getArgument("host") as String?)?.let { config.address = it }
-        (getArgument("port") as Int?)?.let { config.port = it }
-        val username = getArgument("username") as String?
-        val password = getArgument("password") as String?
+        (getOptionalArgument<String>("host"))?.let { config.address = it }
+        (getOptionalArgument<Int>("port"))?.let { config.port = it }
+        val username = getOptionalArgument<String>("username")
+        val password = getOptionalArgument<String>("password")
         username?.let {
             if (password == null) {
                 MinecraftProtocol(it)

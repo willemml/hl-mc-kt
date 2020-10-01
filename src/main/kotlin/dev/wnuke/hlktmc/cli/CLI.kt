@@ -14,6 +14,7 @@ class CLI {
     private val commandManager = CommandManager<CLIMessage>().apply { loadCommands(listOf(launchChatBot, launchDiscordBot).toTypedArray()) }
 
     init {
+        println(commandManager.listCommands())
         while (true) {
             print("hl-mc-kt > ")
             val commandString = readLine()

@@ -1,5 +1,4 @@
 import dev.wnuke.hlktmc.cli.CLI
-import dev.wnuke.hlktmc.minecraft.clientTest
 import io.ktor.util.*
 import kotlinx.serialization.InternalSerializationApi
 import kotlin.random.Random
@@ -8,8 +7,8 @@ import kotlin.random.Random
 @KtorExperimentalAPI
 @InternalSerializationApi
 fun main() {
-    server()
-    clientTest()
+    //server()
+    //clientTest()
     CLI()
 }
 
