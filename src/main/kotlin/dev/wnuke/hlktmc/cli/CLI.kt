@@ -3,12 +3,12 @@ package dev.wnuke.hlktmc.cli
 import dev.wnuke.hlktmc.cli.commands.launchChatBot
 import dev.wnuke.hlktmc.cli.commands.launchDiscordBot
 import dev.wnuke.hlktmc.discord.Discord
-import dev.wnuke.hlktmc.minecraft.MinecraftClient
+import dev.wnuke.hlktmc.minecraft.BasicClient
 import dev.wnuke.ktcmd.Call
 import dev.wnuke.ktcmd.CommandManager
 
 class CLI {
-    val mcClients = HashMap<String, MinecraftClient>()
+    val mcClients = HashMap<String, BasicClient>()
     val discordBots = HashMap<String, Discord>()
 
     private val commandManager = CommandManager<CLIMessage>().apply { loadCommands(listOf(launchChatBot, launchDiscordBot).toTypedArray()) }

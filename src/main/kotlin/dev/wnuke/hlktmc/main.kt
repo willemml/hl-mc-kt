@@ -6,7 +6,6 @@ import dev.wnuke.hlktmc.cli.CLI
 import dev.wnuke.hlktmc.discord.Discord
 import dev.wnuke.hlktmc.minecraft.ClientConfig
 import dev.wnuke.hlktmc.minecraft.bot.ChatBot
-import io.ktor.util.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.InternalSerializationApi
@@ -29,7 +28,6 @@ val discordConfigFile =
     }
 
 @ExperimentalUnsignedTypes
-@KtorExperimentalAPI
 @InternalSerializationApi
 fun main() {
     readConfigs()
