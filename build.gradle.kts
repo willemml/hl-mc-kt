@@ -15,11 +15,10 @@ repositories {
     maven("https://libraries.dev.wnuke.hlktmc.minecraft.net")
     maven("https://dl.bintray.com/kotlin/ktor")
     maven("https://dl.bintray.com/kotlin/kotlinx")
-    maven("https://repo1.maven.org/maven2/org/bouncycastle")
 }
 dependencies {
     implementation("dev.wnuke:kt-cmd:v1.3.0")
-    implementation("org.slf4j:slf4j-simple:1.7.9")
+    implementation("org.slf4j:slf4j-nop:1.7.9")
     implementation("io.ktor:ktor-jackson:1.4.0")
     implementation("io.ktor:ktor-network:1.4.0")
     implementation("io.ktor:ktor-server-jetty:1.4.0")
@@ -32,6 +31,7 @@ dependencies {
     implementation("com.github.Steveice10:MCProtocolLib:976c2d0f89")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.0.0-RC2")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.0.0-RC2")
 }
 
 val run: JavaExec by tasks.getting(JavaExec::class) {

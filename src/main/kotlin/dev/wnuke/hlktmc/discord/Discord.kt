@@ -10,10 +10,10 @@ import net.ayataka.kordis.event.EventHandler
 import net.ayataka.kordis.event.events.message.MessageReceiveEvent
 import java.awt.Color
 
-class Discord(private val botToken: String, private val commandPrefix: String = "!") {
-    private val commandManager = CommandManager<DiscordMessage>().apply { loadCommands(listOf(ping).toTypedArray()) }
+open class Discord(private val botToken: String, private val commandPrefix: String = "!") {
+    open val commandManager = CommandManager<DiscordMessage>().apply { loadCommands(listOf(ping).toTypedArray()) }
 
-    suspend fun start() {
+    open suspend fun start() {
         val client = Kordis.create {
             token = botToken
             addListener(this@Discord)
@@ -21,14 +21,14 @@ class Discord(private val botToken: String, private val commandPrefix: String = 
     }
 
     @EventHandler
-    fun onMessageReceive(event: MessageReceiveEvent) {
+    open fun onMessageReceive(event: MessageReceiveEvent) {
         if (event.message.content.startsWith(commandPrefix)) {
             commandManager.runCommand(DiscordMessage(event, event.message.content.removePrefix(commandPrefix)))
         }
     }
 }
 
-class DiscordMessage(private val event: MessageReceiveEvent, message: String) : Call(message) {
+open class DiscordMessage(private val event: MessageReceiveEvent, message: String) : Call(message) {
     override fun respond(message: String) {
         GlobalScope.launch {
             event.message.channel.send(message)
