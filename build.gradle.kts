@@ -18,8 +18,8 @@ repositories {
     maven("https://repo1.maven.org/maven2/org/bouncycastle")
 }
 dependencies {
-    implementation("dev.wnuke:kt-cmd:8acbe51")
-    implementation("org.slf4j:slf4j-nop:1.7.9")
+    implementation("dev.wnuke:kt-cmd:v1.3.0")
+    implementation("org.slf4j:slf4j-simple:1.7.9")
     implementation("io.ktor:ktor-jackson:1.4.0")
     implementation("io.ktor:ktor-network:1.4.0")
     implementation("io.ktor:ktor-server-jetty:1.4.0")

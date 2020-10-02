@@ -5,6 +5,8 @@ import dev.wnuke.hlktmc.cli.CLIMessage
 import dev.wnuke.hlktmc.minecraft.ClientConfig
 import dev.wnuke.hlktmc.minecraft.bot.ChatBot
 import dev.wnuke.ktcmd.Command
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 val launchChatBot = Command<CLIMessage>("launchcb", "Launches an instance of Minecraft chat bot.") {
     (getArgument("name") as String?)?.let { name ->
@@ -20,7 +22,9 @@ val launchChatBot = Command<CLIMessage>("launchcb", "Launches an instance of Min
                 MinecraftProtocol(password)
             }
         }
-        it.cli.mcClients[name] = ChatBot(config)
+        it.cli.mcClients[name] = ChatBot(config).apply {
+            GlobalScope.launch { connect() }
+        }
     }
 
 }.apply {
