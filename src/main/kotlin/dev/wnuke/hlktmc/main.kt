@@ -7,6 +7,7 @@ import dev.wnuke.hlktmc.discord.Discord
 import dev.wnuke.hlktmc.minecraft.ClientConfig
 import dev.wnuke.hlktmc.minecraft.bot.ChatBot
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.decodeFromString
@@ -44,20 +45,23 @@ fun startBots() {
     for (bot in discordBots) {
         GlobalScope.launch { Discord(bot.token, bot.prefix).start() }
     }
-    for (bot in minecraftBots) {
-        GlobalScope.launch {
-            ChatBot(
-                ClientConfig(
-                    bot.server,
-                    bot.port,
-                    if (bot.password.isNotEmpty()) MinecraftProtocol(
-                        bot.username,
-                        bot.password
-                    ) else MinecraftProtocol(bot.username),
-                    connectionLogs = false,
-                    chatLogs = false
-                ), bot.prefix
-            ).connect()
+    GlobalScope.launch {
+        for (bot in minecraftBots) {
+            GlobalScope.launch {
+                ChatBot(
+                    ClientConfig(
+                        bot.server,
+                        bot.port,
+                        if (bot.password.isNotEmpty()) MinecraftProtocol(
+                            bot.username,
+                            bot.password
+                        ) else MinecraftProtocol(bot.username),
+                        connectionLogs = false,
+                        chatLogs = false
+                    ), bot.prefix
+                ).connect()
+            }
+            delay(6000)
         }
     }
 }
