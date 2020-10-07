@@ -1,14 +1,13 @@
 package dev.wnuke.hlktmc.minecraft
 
+import com.github.steveice10.mc.auth.data.GameProfile
 import com.github.steveice10.mc.protocol.MinecraftProtocol
 import com.github.steveice10.mc.protocol.data.game.ClientRequest
 import com.github.steveice10.mc.protocol.data.game.MessageType
 import com.github.steveice10.mc.protocol.data.message.MessageSerializer
 import com.github.steveice10.mc.protocol.packet.ingame.client.ClientChatPacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.ClientRequestPacket
-import com.github.steveice10.mc.protocol.packet.ingame.server.ServerChatPacket
-import com.github.steveice10.mc.protocol.packet.ingame.server.ServerCombatPacket
-import com.github.steveice10.mc.protocol.packet.ingame.server.ServerJoinGamePacket
+import com.github.steveice10.mc.protocol.packet.ingame.server.*
 import com.github.steveice10.mc.protocol.packet.ingame.server.entity.ServerEntityPositionPacket
 import com.github.steveice10.mc.protocol.packet.ingame.server.entity.ServerEntityPositionRotationPacket
 import com.github.steveice10.mc.protocol.packet.ingame.server.entity.ServerEntityRotationPacket
@@ -22,8 +21,9 @@ import com.github.steveice10.packetlib.event.session.SessionAdapter
 import com.github.steveice10.packetlib.packet.Packet
 import com.github.steveice10.packetlib.tcp.TcpSessionFactory
 import kotlinx.coroutines.delay
-import randomAlphanumeric
+import dev.wnuke.hlktmc.randomAlphanumeric
 import java.util.*
+import kotlin.collections.HashMap
 
 data class ClientConfig(
     var address: String = "127.0.0.1",
@@ -42,6 +42,10 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
     private val hostPort = "${config.address}:${config.port}"
 
     var player: Player? = null
+
+    var playerListHeader = ""
+    var playerListFooter = ""
+    val playerListEntries = HashMap<UUID, GameProfile>()
 
     init {
         client.session.addListener(object : SessionAdapter() {
@@ -113,6 +117,17 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
                             )
                         }
                     }
+                    is ServerPlayerListEntryPacket -> {
+                        val packet = event.getPacket<ServerPlayerListEntryPacket>()
+                        for (entry in packet.entries) {
+                            playerListEntries[entry.profile.id] = entry.profile
+                        }
+                    }
+                    is ServerPlayerListDataPacket -> {
+                        val packet = event.getPacket<ServerPlayerListDataPacket>()
+                        playerListHeader = packet.header.toString()
+                        playerListFooter = packet.header.toString()
+                    }
                 }
             }
 
@@ -130,7 +145,6 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
         while (!joined) {
             delay(5)
         }
-        println(client.session.flags.asIterable().joinToString(", "))
         return this
     }
 

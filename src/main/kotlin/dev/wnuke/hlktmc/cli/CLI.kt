@@ -8,9 +8,6 @@ import dev.wnuke.ktcmd.Call
 import dev.wnuke.ktcmd.CommandManager
 
 class CLI {
-    val mcClients = HashMap<String, BasicClient>()
-    val discordBots = HashMap<String, Discord>()
-
     private val commandManager = CommandManager<CLIMessage>().apply { loadCommands(listOf(launchChatBot, launchDiscordBot).toTypedArray()) }
 
     init {

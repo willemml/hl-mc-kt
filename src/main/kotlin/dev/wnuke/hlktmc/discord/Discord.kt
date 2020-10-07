@@ -5,6 +5,7 @@ import dev.wnuke.ktcmd.Call
 import dev.wnuke.ktcmd.CommandManager
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import net.ayataka.kordis.DiscordClient
 import net.ayataka.kordis.Kordis
 import net.ayataka.kordis.event.EventHandler
 import net.ayataka.kordis.event.events.message.MessageReceiveEvent
@@ -13,11 +14,17 @@ import java.awt.Color
 open class Discord(private val botToken: String, private val commandPrefix: String = "!") {
     open val commandManager = CommandManager<DiscordMessage>().apply { loadCommands(listOf(ping).toTypedArray()) }
 
+    open var client: DiscordClient? = null
+
     open suspend fun start() {
-        val client = Kordis.create {
+        client = Kordis.create {
             token = botToken
             addListener(this@Discord)
         }
+    }
+
+    open fun stop() {
+        client?.removeListener(this@Discord)
     }
 
     @EventHandler
