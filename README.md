@@ -1,5 +1,6 @@
 [![Discord](https://img.shields.io/discord/745728805678874800?logo=discord)](https://dev.wnuke.hlktmc.discord.gg/MwBvhEz)
 [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/wnuke/hl-mc-kt/Java%20CI%20with%20Gradle?logo=github)](https://github.com/wnuke/hl-mc-kt/actions?query=workflow%3A%22Java%20CI%20with%20Gradle%22)
+[![](https://jitpack.io/v/dev.wnuke/hl-mc-kt.svg)](https://jitpack.io/#dev.wnuke/hl-mc-kt)
 # Headless Minecraft Kotlin (hl-mc-kt)
 
 Inspired by [stevenarella](https://github.com/iceiix/stevenarella).
