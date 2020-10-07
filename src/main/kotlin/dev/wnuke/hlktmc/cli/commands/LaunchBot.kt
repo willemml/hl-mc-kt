@@ -1,12 +1,10 @@
 package dev.wnuke.hlktmc.cli.commands
 
-import dev.wnuke.hlktmc.addMinecraftBot
+import dev.wnuke.hlktmc.*
 import dev.wnuke.hlktmc.cli.CLIMessage
-import dev.wnuke.hlktmc.randomAlphanumeric
-import dev.wnuke.hlktmc.startMinecraftBot
 import dev.wnuke.ktcmd.Command
 
-val launchChatBot = Command<CLIMessage>("launchcb", "Launches an instance of Minecraft chat bot.") {
+val launchMinecraftBot = Command<CLIMessage>("launchcb", "Launches an instance of Minecraft chat bot.", arrayListOf("lcb", "lc",  "lmc")) {
     val name = getArgument<String>("name")
     val username = getOptionalArgument<String>("username")
     addMinecraftBot(
@@ -30,4 +28,27 @@ val launchChatBot = Command<CLIMessage>("launchcb", "Launches an instance of Min
     boolean("chat_log", false, "Whether or not to log chat messages to console", "cl", false)
     boolean("connection_log", false, "Whether or not to log connection status to console", "l", false)
     boolean("start", false, "Whether or not to start the bot immediately", "s", true)
+}
+
+val launchDiscordBot = Command<CLIMessage>("launchdb", "Launches an instance of the Discord bot.", arrayListOf("ldb", "ld")) {
+    val name = getArgument<String>("name")
+    addDiscordBot(
+        name,
+        getArgument("token"),
+        getOptionalArgument("prefix")
+    )
+    if (getOptionalArgument("start")) startDiscordBot(name)
+}.apply {
+    string("name", true, "Name of the Discord bot instance", "n")
+    string("token", true, "Discord bot token to use", "t")
+    string("prefix", false, "Prefix to listen for commands with", "p", "!")
+    boolean("start", false, "Whether or not to start the bot immediately", "s", true)
+}
+
+val launchAllBots = Command<CLIMessage>("launchbots", "Launches all bots from config file.", arrayListOf("lb")) {
+    if (getOptionalArgument("minecraft")) startMinecraftBots()
+    if (getOptionalArgument("discord")) startDiscordBots()
+}.apply {
+    boolean("discord", false, "Whether or not to start all Discord bots, defaults to true", "d", true)
+    boolean("minecraft", false, "Whether or not to start all Minecraft bots, defaults to true", "m", true)
 }

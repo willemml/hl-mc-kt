@@ -7,7 +7,7 @@ import dev.wnuke.hlktmc.readDiscordConfig
 import dev.wnuke.hlktmc.readMinecraftConfig
 import dev.wnuke.ktcmd.Command
 
-val listBots = Command<CLIMessage>("listbots", "Lists all bots.") {
+val listBots = Command<CLIMessage>("listbots", "Lists all bots.", arrayListOf("l", "ls")) {
     readDiscordConfig()
     readMinecraftConfig()
     if (getOptionalArgument("minecraft")) println("Minecraft bots: ${minecraftBotConfigs.keys.joinToString()}")

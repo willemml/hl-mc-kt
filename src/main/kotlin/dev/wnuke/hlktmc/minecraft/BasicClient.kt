@@ -3,7 +3,6 @@ package dev.wnuke.hlktmc.minecraft
 import com.github.steveice10.mc.auth.data.GameProfile
 import com.github.steveice10.mc.protocol.MinecraftProtocol
 import com.github.steveice10.mc.protocol.data.game.ClientRequest
-import com.github.steveice10.mc.protocol.data.game.MessageType
 import com.github.steveice10.mc.protocol.data.message.MessageSerializer
 import com.github.steveice10.mc.protocol.packet.ingame.client.ClientChatPacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.ClientRequestPacket
@@ -20,8 +19,8 @@ import com.github.steveice10.packetlib.event.session.PacketReceivedEvent
 import com.github.steveice10.packetlib.event.session.SessionAdapter
 import com.github.steveice10.packetlib.packet.Packet
 import com.github.steveice10.packetlib.tcp.TcpSessionFactory
-import kotlinx.coroutines.delay
 import dev.wnuke.hlktmc.randomAlphanumeric
+import kotlinx.coroutines.delay
 import java.util.*
 import kotlin.collections.HashMap
 
@@ -94,13 +93,11 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
                     is ServerChatPacket -> {
                         respawn()
                         val packet = event.getPacket<ServerChatPacket>()
-                        if (packet.type == MessageType.CHAT) {
-                            val message = MessageSerializer.toJson(packet.message).asJsonObject.getAsJsonArray("with")
-                                .last().asString
-                            if (packet.senderUuid != config.protocol.profile.id) {
-                                if (config.chatLogs) println("[$hostPort]${packet.senderUuid} > $message")
-                                onChat(message, packet.senderUuid)
-                            }
+                        val extra = MessageSerializer.toJson(packet.message).asJsonObject["extra"].asJsonArray
+                        val message = (if (extra.first().isJsonObject) extra.first().asJsonObject["text"] else extra.first()).asString.removeSurrounding("\"", "\"")
+                        if (packet.senderUuid != config.protocol.profile.id) {
+                            if (config.chatLogs) println("[$hostPort]${packet.senderUuid} > $message")
+                            onChat(message, packet.senderUuid)
                         }
                     }
                     is ServerCombatPacket -> {

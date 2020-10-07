@@ -137,7 +137,7 @@ fun startMinecraftBots() {
         for (name in minecraftBotConfigs.keys) {
             if (startMinecraftBot(name)) {
                 bots.add(name)
-                if (minecraftBotConfigs[name]?.password?.isNotEmpty() == true) delay(6000)
+                delay(10000)
             }
         }
     }
