@@ -3,11 +3,8 @@
 [![](https://jitpack.io/v/dev.wnuke/hl-mc-kt.svg)](https://jitpack.io/#dev.wnuke/hl-mc-kt)
 # Headless Minecraft Kotlin (hl-mc-kt)
 
-Inspired by [stevenarella](https://github.com/iceiix/stevenarella).
-
 The goal is to have full chat support, movement support (for pathing), support for crafting things/interacting with the world so that this could be used as a bot for automation, it should also be lightweight and be threadable/connect to multiple servers at once or one server with multiple accounts.
 
 #### Credits
  - Steveice10's [MCProtocolLib](https://github.com/Steveice10/MCProtocolLib) for saving me lots of time.
  - Tea-Ayataka's [Kordis](https://github.com/Tea-Ayataka/Kordis) for making it easy to interact with the Discord API.
- - kami-blue's [bot-kt](https://github.com/kami-blue/bot-kt) for inspiration for listing dependencies so I could use them to build this.
