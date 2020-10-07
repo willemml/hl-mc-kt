@@ -7,6 +7,7 @@ import dev.wnuke.hlktmc.minecraft.bot.ChatBot
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -40,11 +41,25 @@ fun writeDiscordConfig() {
 }
 
 fun readDiscordConfig() {
-    discordBotConfigs = Json.decodeFromString(discordConfigFile.readText())
+    try {
+        discordBotConfigs = Json.decodeFromString(discordConfigFile.readText())
+    } catch (e: SerializationException) {
+        println("Broken Discord config file, backing up and resetting...")
+        discordConfigFile.copyTo(File("config/discord-bots-old.json"), true)
+        discordConfigFile.delete()
+        writeDiscordConfig()
+    }
 }
 
 fun readMinecraftConfig() {
-    minecraftBotConfigs = Json.decodeFromString(minecraftConfigFile.readText())
+    try {
+        minecraftBotConfigs = Json.decodeFromString(minecraftConfigFile.readText())
+    } catch (e: SerializationException) {
+        println("Broken Minecraft config file, backing up and resetting...")
+        minecraftConfigFile.copyTo(File("config/minecraft-bots-old.json"), true)
+        minecraftConfigFile.delete()
+        writeMinecraftConfig()
+    }
 }
 
 fun addMinecraftBot(name: String, server: String, port: Int, username: String, password: String, prefix: String, connectionLogs: Boolean, chatLogs: Boolean) {
