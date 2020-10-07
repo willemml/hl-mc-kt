@@ -1,14 +1,14 @@
 package dev.wnuke.hlktmc.cli
 
+import dev.wnuke.hlktmc.cli.commands.launchAllBots
 import dev.wnuke.hlktmc.cli.commands.launchChatBot
 import dev.wnuke.hlktmc.cli.commands.launchDiscordBot
-import dev.wnuke.hlktmc.discord.Discord
-import dev.wnuke.hlktmc.minecraft.BasicClient
+import dev.wnuke.hlktmc.cli.commands.listBots
 import dev.wnuke.ktcmd.Call
 import dev.wnuke.ktcmd.CommandManager
 
 class CLI {
-    private val commandManager = CommandManager<CLIMessage>().apply { loadCommands(listOf(launchChatBot, launchDiscordBot).toTypedArray()) }
+    private val commandManager = CommandManager<CLIMessage>().apply { loadCommands(listOf(launchAllBots, launchChatBot, launchDiscordBot, listBots).toTypedArray()) }
 
     init {
         println(commandManager.listCommands())

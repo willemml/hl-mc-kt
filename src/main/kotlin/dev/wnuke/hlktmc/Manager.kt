@@ -7,6 +7,7 @@ import dev.wnuke.hlktmc.minecraft.bot.ChatBot
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
@@ -25,6 +26,26 @@ val discordConfigFile =
         parentFile.mkdirs()
         if (createNewFile()) this.writeText(Json.encodeToString(discordBotConfigs))
     }
+
+fun writeMinecraftConfig() {
+    minecraftConfigFile.parentFile.mkdirs()
+    minecraftConfigFile.createNewFile()
+    minecraftConfigFile.writeText(Json.encodeToString(minecraftBotConfigs))
+}
+
+fun writeDiscordConfig() {
+    discordConfigFile.parentFile.mkdirs()
+    discordConfigFile.createNewFile()
+    discordConfigFile.writeText(Json.encodeToString(discordBotConfigs))
+}
+
+fun readDiscordConfig() {
+    discordBotConfigs = Json.decodeFromString(discordConfigFile.readText())
+}
+
+fun readMinecraftConfig() {
+    minecraftBotConfigs = Json.decodeFromString(minecraftConfigFile.readText())
+}
 
 fun addMinecraftBot(name: String, server: String, port: Int, username: String, password: String, prefix: String, connectionLogs: Boolean, chatLogs: Boolean) {
     readMinecraftConfig()
@@ -55,6 +76,7 @@ fun removeDiscordBot(name: String) {
 }
 
 fun startMinecraftBot(name: String): Boolean {
+    readMinecraftConfig()
     val bot = minecraftBotConfigs[name]?: return false
     GlobalScope.launch {
         minecraftBots[name] = ChatBot(
@@ -68,7 +90,9 @@ fun startMinecraftBot(name: String): Boolean {
                 connectionLogs = bot.connectionLogs,
                 chatLogs = bot.chatLogs
             ), bot.prefix
-        )
+        ).apply {
+            connect()
+        }
     }
     return true
 }
@@ -76,18 +100,19 @@ fun startMinecraftBot(name: String): Boolean {
 fun startDiscordBot(name: String): Boolean {
     val bot = discordBotConfigs[name]?: return false
     GlobalScope.launch {
-        discordBots[name] = Discord(bot.token, bot.prefix)
+        discordBots[name] = Discord(bot.token, bot.prefix).apply { start() }
     }
     return true
 }
 
 fun startDiscordBots() {
+    readDiscordConfig()
     println("Starting Discord bots...")
     val bots = ArrayList<String>()
     for (name in discordBotConfigs.keys) {
         if (startDiscordBot(name)) bots.add(name)
     }
-    println("Started Discord Bots: ${bots.joinToString()}")
+    if (bots.isNotEmpty()) println("Started Discord Bots: ${bots.joinToString()}")
 }
 
 fun startMinecraftBots() {
@@ -101,5 +126,5 @@ fun startMinecraftBots() {
             }
         }
     }
-    println("Started Minecraft Bots: ${bots.joinToString()}")
+    if (bots.isNotEmpty()) println("Started Minecraft Bots: ${bots.joinToString()}")
 }

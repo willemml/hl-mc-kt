@@ -1,13 +1,7 @@
 package dev.wnuke.hlktmc
 
-import discordBotConfigs
-import discordConfigFile
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
-import minecraftBotConfigs
-import minecraftConfigFile
+import kotlin.random.Random
 
 @Serializable
 class ChatBotConfig(
@@ -23,22 +17,8 @@ class ChatBotConfig(
 @Serializable
 class DiscordConfig(val token: String = "", val prefix: String = "!")
 
-fun writeMinecraftConfig() {
-    minecraftConfigFile.parentFile.mkdirs()
-    minecraftConfigFile.createNewFile()
-    minecraftConfigFile.writeText(Json.encodeToString(minecraftBotConfigs))
+fun randomAlphanumeric(length: Int): String {
+    return (1..length).map { alphanumeric[Random.nextInt(0, alphanumeric.length)] }.joinToString("")
 }
 
-fun writeDiscordConfig() {
-    discordConfigFile.parentFile.mkdirs()
-    discordConfigFile.createNewFile()
-    discordConfigFile.writeText(Json.encodeToString(discordBotConfigs))
-}
-
-fun readDiscordConfig() {
-    discordBotConfigs = Json.decodeFromString(discordConfigFile.readText())
-}
-
-fun readMinecraftConfig() {
-    minecraftBotConfigs = Json.decodeFromString(minecraftConfigFile.readText())
-}
+const val alphanumeric = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
