@@ -19,6 +19,7 @@ import com.github.steveice10.packetlib.event.session.PacketReceivedEvent
 import com.github.steveice10.packetlib.event.session.SessionAdapter
 import com.github.steveice10.packetlib.packet.Packet
 import com.github.steveice10.packetlib.tcp.TcpSessionFactory
+import com.google.gson.JsonElement
 import dev.wnuke.hlktmc.randomAlphanumeric
 import kotlinx.coroutines.delay
 import java.util.*
@@ -68,37 +69,36 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
                     is ServerEntityPositionPacket -> {
                         val packet = event.getPacket<ServerEntityPositionPacket>()
                         if (packet.entityId == player?.entityID) {
-                            player?.position?.x = player?.position?.x?.plus(packet.moveX / (128 * 32))!!
-                            player?.position?.y = player?.position?.y?.plus(packet.moveX / (128 * 32))!!
-                            player?.position?.z = player?.position?.z?.plus(packet.moveX / (128 * 32))!!
+                            player?.position?.x = player?.position?.x?.plus(packet.moveX / (128 * 32)) ?: return
+                            player?.position?.y = player?.position?.y?.plus(packet.moveX / (128 * 32)) ?: return
+                            player?.position?.z = player?.position?.z?.plus(packet.moveX / (128 * 32)) ?: return
                         }
                     }
                     is ServerEntityRotationPacket -> {
                         val packet = event.getPacket<ServerEntityRotationPacket>()
                         if (packet.entityId == player?.entityID) {
-                            player?.position?.pitch = player?.position?.pitch?.plus(packet.pitch)!!
-                            player?.position?.yaw = player?.position?.yaw?.plus(packet.yaw)!!
+                            player?.position?.pitch = player?.position?.pitch?.plus(packet.pitch) ?: return
+                            player?.position?.yaw = player?.position?.yaw?.plus(packet.yaw) ?: return
                         }
                     }
                     is ServerEntityPositionRotationPacket -> {
                         val packet = event.getPacket<ServerEntityPositionRotationPacket>()
                         if (packet.entityId == player?.entityID) {
-                            player?.position?.x = player?.position?.x?.plus(packet.moveX / (128 * 32))!!
-                            player?.position?.y = player?.position?.y?.plus(packet.moveX / (128 * 32))!!
-                            player?.position?.z = player?.position?.z?.plus(packet.moveX / (128 * 32))!!
-                            player?.position?.pitch = player?.position?.pitch?.plus(packet.pitch)!!
-                            player?.position?.yaw = player?.position?.yaw?.plus(packet.yaw)!!
+                            player?.position?.x = player?.position?.x?.plus(packet.moveX / (128 * 32)) ?: return
+                            player?.position?.y = player?.position?.y?.plus(packet.moveX / (128 * 32)) ?: return
+                            player?.position?.z = player?.position?.z?.plus(packet.moveX / (128 * 32)) ?: return
+                            player?.position?.pitch = player?.position?.pitch?.plus(packet.pitch) ?: return
+                            player?.position?.yaw = player?.position?.yaw?.plus(packet.yaw) ?: return
                         }
                     }
                     is ServerChatPacket -> {
-                        respawn()
                         val packet = event.getPacket<ServerChatPacket>()
-                        val extra = MessageSerializer.toJson(packet.message).asJsonObject["extra"].asJsonArray
-                        val message = (if (extra.first().isJsonObject) extra.first().asJsonObject["text"] else extra.first()).asString.removeSurrounding("\"", "\"")
-                        if (packet.senderUuid != config.protocol.profile.id) {
-                            if (config.chatLogs) println("[$hostPort]${packet.senderUuid} > $message")
-                            onChat(message, packet.senderUuid)
+                        val rawMessage = MessageSerializer.toJson(packet.message)
+                        val message = parseChat(rawMessage)
+                        if (config.chatLogs) {
+                            println("${packet.senderUuid}@$hostPort (${packet.type}): $message")
                         }
+                        onChat(message, packet.senderUuid, rawMessage)
                     }
                     is ServerCombatPacket -> {
                         respawn()
@@ -112,6 +112,7 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
                                 packet.entityId,
                                 Position(packet.x, packet.y, packet.z, packet.pitch, packet.yaw)
                             )
+                            println(player)
                         }
                     }
                     is ServerPlayerListEntryPacket -> {
@@ -129,7 +130,15 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
             }
 
             override fun disconnected(event: DisconnectedEvent?) {
-                if (config.connectionLogs) println("$hostPort Disconnected, reason: ${event?.reason}")
+                if (config.connectionLogs) println(
+                    "$hostPort Disconnected, reason: ${
+                        parseChat(
+                            MessageSerializer.toJson(
+                                MessageSerializer.fromString(event?.reason)
+                            )
+                        )
+                    }"
+                )
                 joined = false
                 onLeave(event ?: return)
             }
@@ -163,7 +172,36 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
 
     open fun onJoin(packet: ServerJoinGamePacket) {}
     open fun onLeave(event: DisconnectedEvent) {}
-    open fun onChat(message: String, sender: UUID) {}
+    open fun onChat(message: String, sender: UUID, rawMessage: JsonElement) {}
+
+    fun parseChat(json: JsonElement): String {
+        var string = ""
+        when {
+            json.isJsonObject -> {
+                for (i in json.asJsonObject.entrySet()) {
+                    string += when (i.key) {
+                        "text" -> unQuote(i.value.asString)
+                        "with" -> unQuote(i.value.asJsonArray[1].asString)
+                        else -> parseChat(i.value)
+                    }
+                }
+            }
+            json.isJsonArray -> {
+                val arr = json.asJsonArray
+                if (arr.size() > 1 && arr[1] != null && arr[1].isJsonPrimitive) string += unQuote(arr[1].asString)
+                else {
+                    for (i in arr) {
+                        string += parseChat(i)
+                    }
+                }
+            }
+        }
+        return string.removePrefix(">").removePrefix(" ")
+    }
+
+    fun unQuote(string: String): String {
+        return string.removeSurrounding("\"", "\"")
+    }
 }
 
 data class Player(val name: String, val uuid: UUID, var entityID: Int, var position: Position)
