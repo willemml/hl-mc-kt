@@ -12,9 +12,9 @@ repositories {
     mavenCentral()
     jcenter()
     maven("https://jitpack.io")
-    maven("https://libraries.dev.wnuke.hlktmc.minecraft.net")
     maven("https://dl.bintray.com/kotlin/ktor")
     maven("https://dl.bintray.com/kotlin/kotlinx")
+    maven("https://maven.daporkchop.net")
 }
 dependencies {
     implementation("dev.wnuke:kt-cmd:v1.5.0")
@@ -29,6 +29,7 @@ dependencies {
     implementation("com.github.Tea-Ayataka:Kordis:0.2.3")
     implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.2")
     implementation("com.github.Steveice10:MCProtocolLib:976c2d0f89")
+    implementation("net.daporkchop.lib:minecraft-text:0.5.5-SNAPSHOT")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.0.0-RC2")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.0.0-RC2")

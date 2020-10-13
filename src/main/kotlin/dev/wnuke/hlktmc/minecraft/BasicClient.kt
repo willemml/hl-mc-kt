@@ -19,9 +19,10 @@ import com.github.steveice10.packetlib.event.session.PacketReceivedEvent
 import com.github.steveice10.packetlib.event.session.SessionAdapter
 import com.github.steveice10.packetlib.packet.Packet
 import com.github.steveice10.packetlib.tcp.TcpSessionFactory
-import com.google.gson.JsonElement
 import dev.wnuke.hlktmc.randomAlphanumeric
 import kotlinx.coroutines.delay
+import net.daporkchop.lib.minecraft.text.component.MCTextRoot
+import net.daporkchop.lib.minecraft.text.parser.MCFormatParser
 import java.util.*
 import kotlin.collections.HashMap
 
@@ -93,12 +94,12 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
                     }
                     is ServerChatPacket -> {
                         val packet = event.getPacket<ServerChatPacket>()
-                        val rawMessage = MessageSerializer.toJson(packet.message)
-                        val message = parseChat(rawMessage)
+                        val message = MCFormatParser.DEFAULT.parse(MessageSerializer.toJsonString(packet.message))
+                        val messageString = message.toRawString()
                         if (config.chatLogs) {
-                            println("${packet.senderUuid}@$hostPort (${packet.type}): $message")
+                            println("${packet.senderUuid}@$hostPort (${packet.type}): $messageString")
                         }
-                        onChat(message, packet.senderUuid, rawMessage)
+                        onChat(messageString, packet.senderUuid, message)
                     }
                     is ServerCombatPacket -> {
                         respawn()
@@ -112,7 +113,6 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
                                 packet.entityId,
                                 Position(packet.x, packet.y, packet.z, packet.pitch, packet.yaw)
                             )
-                            println(player)
                         }
                     }
                     is ServerPlayerListEntryPacket -> {
@@ -132,11 +132,11 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
             override fun disconnected(event: DisconnectedEvent?) {
                 if (config.connectionLogs) println(
                     "$hostPort Disconnected, reason: ${
-                        parseChat(
-                            MessageSerializer.toJson(
-                                MessageSerializer.fromString(event?.reason)
+                        event?.reason?.let {
+                            MCFormatParser.DEFAULT.parse(
+                                it
                             )
-                        )
+                        }
                     }"
                 )
                 joined = false
@@ -172,36 +172,7 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
 
     open fun onJoin(packet: ServerJoinGamePacket) {}
     open fun onLeave(event: DisconnectedEvent) {}
-    open fun onChat(message: String, sender: UUID, rawMessage: JsonElement) {}
-
-    fun parseChat(json: JsonElement): String {
-        var string = ""
-        when {
-            json.isJsonObject -> {
-                for (i in json.asJsonObject.entrySet()) {
-                    string += when (i.key) {
-                        "text" -> unQuote(i.value.asString)
-                        "with" -> unQuote(i.value.asJsonArray[1].asString)
-                        else -> parseChat(i.value)
-                    }
-                }
-            }
-            json.isJsonArray -> {
-                val arr = json.asJsonArray
-                if (arr.size() > 1 && arr[1] != null && arr[1].isJsonPrimitive) string += unQuote(arr[1].asString)
-                else {
-                    for (i in arr) {
-                        string += parseChat(i)
-                    }
-                }
-            }
-        }
-        return string.removePrefix(">").removePrefix(" ")
-    }
-
-    fun unQuote(string: String): String {
-        return string.removeSurrounding("\"", "\"")
-    }
+    open fun onChat(message: String, sender: UUID, rawMessage: MCTextRoot) {}
 }
 
 data class Player(val name: String, val uuid: UUID, var entityID: Int, var position: Position)

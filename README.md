@@ -8,3 +8,4 @@ The goal is to have full chat support, movement support (for pathing), support f
 #### Credits
  - Steveice10's [MCProtocolLib](https://github.com/Steveice10/MCProtocolLib) for saving me lots of time.
  - Tea-Ayataka's [Kordis](https://github.com/Tea-Ayataka/Kordis) for making it easy to interact with the Discord API.
+ - PorkStudios' [PorkLib](https://github.com/PorkStudios/PorkLib) for its easy to use Minecraft text parsing.
