@@ -13,7 +13,7 @@ class ChatBot(clientConfig: ClientConfig = ClientConfig(), private val commandPr
     private val commandManager = CommandManager<ChatMessage>().apply { addCommand(echo) }
 
     override fun onChat(message: String, messageType: MessageType, sender: UUID, rawMessage: MCTextRoot) {
-        val usernameRegexStrings = arrayOf("<\\w+> ",  "\\w+ >> ")
+        val usernameRegexStrings = arrayOf("<\\w+> ",  "\\w+ >> ", "[D] \\w+ >> ")
         val usernameRegexArray = usernameRegexStrings.map { Regex(it) }
         var messageFormatted = message
         for (regex in usernameRegexArray) {

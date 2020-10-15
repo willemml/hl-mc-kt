@@ -29,8 +29,8 @@ dependencies {
     implementation("com.github.Tea-Ayataka:Kordis:0.2.3")
     implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.2")
     implementation("com.github.Steveice10:MCProtocolLib:976c2d0f89")
-    implementation("net.daporkchop.lib:minecraft-text:0.5.5-SNAPSHOT")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
+    implementation("net.daporkchop.lib:minecraft-text:0.5.5-20201015.135524-33")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.0.0-RC2")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.0.0-RC2")
 }

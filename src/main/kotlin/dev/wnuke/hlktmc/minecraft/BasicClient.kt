@@ -23,7 +23,9 @@ import com.github.steveice10.packetlib.tcp.TcpSessionFactory
 import dev.wnuke.hlktmc.ClientConfig
 import kotlinx.coroutines.delay
 import net.daporkchop.lib.minecraft.text.component.MCTextRoot
+import net.daporkchop.lib.minecraft.text.parser.AutoMCFormatParser
 import net.daporkchop.lib.minecraft.text.parser.MCFormatParser
+import net.daporkchop.lib.minecraft.text.util.TranslationSource
 import java.util.*
 import kotlin.collections.HashMap
 
@@ -39,6 +41,9 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
     private var joined = false
 
     private val hostPort = "${config.address}:${config.port}"
+
+
+    private val parser = AutoMCFormatParser(TranslationSource.ofMap(hashMapOf(Pair("chat.type.text", "<%s> %s"), Pair("chat.type.announcement", "[%s] %s"))))
 
     var player: Player? = null
 
@@ -92,7 +97,7 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
                     }
                     is ServerChatPacket -> {
                         val packet = event.getPacket<ServerChatPacket>()
-                        val message = MCFormatParser.DEFAULT.parse(MessageSerializer.toJsonString(packet.message))
+                        val message = parser.parse(MessageSerializer.toJsonString(packet.message))
                         val messageString = message.toRawString()
                         if (config.logChat) logChat(messageString, packet.type, packet.senderUuid, message)
                         onChat(messageString, packet.type, packet.senderUuid, message)
@@ -114,7 +119,7 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
                     is ServerPlayerListEntryPacket -> {
                         val packet = event.getPacket<ServerPlayerListEntryPacket>()
                         for (entry in packet.entries) {
-                            playerListEntries[entry.profile.id] = entry.profile
+                            if (entry.profile.isComplete) playerListEntries[entry.profile.id] = entry.profile
                         }
                     }
                     is ServerPlayerListDataPacket -> {
@@ -127,7 +132,7 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
 
             override fun disconnected(event: DisconnectedEvent?) {
                 if (config.logConnection) connectionLog(event?.reason ?: "".let {
-                    MCFormatParser.DEFAULT.parse(it).toRawString()
+                    parser.parse(it).toRawString()
                 }, ConnectionLogType.DISCONNECTED)
                 joined = false
                 onLeave(event ?: return)
@@ -161,8 +166,10 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
         return this
     }
 
+    fun getNameFromID(id: UUID) = playerListEntries[id]?.name
+
     open fun logChat(message: String, messageType: MessageType, sender: UUID, rawMessage: MCTextRoot) {
-        println("$sender@$hostPort ($messageType): $message")
+        println("${getNameFromID(sender)?: sender}@$hostPort ($messageType): $message")
     }
 
     open fun connectionLog(info: String, type: ConnectionLogType) {
