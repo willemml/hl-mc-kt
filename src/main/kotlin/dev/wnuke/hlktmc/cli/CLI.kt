@@ -8,14 +8,12 @@ class CLI {
     private val commandManager = CommandManager<CLIMessage>().apply {
         loadCommands(
             listOf(
-                connectDiscordBot,
-                connectMinecraftBot,
+                connectBot,
                 launchAllBots,
                 launchMinecraftBot,
                 launchDiscordBot,
                 listBots,
-                removeDiscordBot,
-                removeMinecraftBot,
+                removeBot,
                 sendFromMinecraftBot
             ).toTypedArray()
         )

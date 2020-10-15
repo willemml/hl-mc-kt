@@ -4,7 +4,7 @@ import dev.wnuke.hlktmc.cli.CLIMessage
 import dev.wnuke.hlktmc.minecraftBots
 import dev.wnuke.ktcmd.Command
 
-val sendFromMinecraftBot = Command<CLIMessage>("sendmc", "Sends a message from a Minecraft bot instance.", arrayListOf("smc", "smcb")) {
+val sendFromMinecraftBot = Command<CLIMessage>("sendmc", "Sends a message from a Minecraft bot instance.", arrayListOf("m", "sm", "smc"), true) {
     val name = getArgument<String>("botname")
     val bot = minecraftBots[name]
     if (bot == null) {
@@ -13,6 +13,6 @@ val sendFromMinecraftBot = Command<CLIMessage>("sendmc", "Sends a message from a
     }
     bot.sendMessage(getArgument("message"))
 }.apply {
-    string("botname", true, "Name of the bot to remove", "b")
-    string("message", true, "Message to send", "m")
+    string("botname", true, "Name of the bot to remove")
+    string("message", true, "Message to send")
 }

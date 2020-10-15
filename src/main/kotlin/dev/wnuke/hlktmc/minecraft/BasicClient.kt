@@ -152,7 +152,7 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
 
     fun respawn(): BasicClient {
         client.session.send(ClientRequestPacket(ClientRequest.RESPAWN))
-        if (config.logRespawns) connectionLog("", ConnectionLogType.DISCONNECTING)
+        if (config.logRespawns && joined) connectionLog("", ConnectionLogType.RESPAWN)
         return this
     }
 

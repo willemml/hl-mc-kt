@@ -10,8 +10,8 @@ import dev.wnuke.ktcmd.Command
 val listBots = Command<CLIMessage>("listbots", "Lists all bots.", arrayListOf("l", "ls")) {
     readDiscordConfig()
     readMinecraftConfig()
-    if (getOptionalArgument("minecraft")) println("Minecraft bots: ${minecraftBotConfigs.keys.joinToString()}")
-    if (getOptionalArgument("discord")) println("Discord bots: ${discordBotConfigs.keys.joinToString()}")
+    if (getOptionalArgument("minecraft") && minecraftBotConfigs.isNotEmpty()) println("Minecraft bots: ${minecraftBotConfigs.keys.joinToString()}")
+    if (getOptionalArgument("discord") && discordBotConfigs.isNotEmpty()) println("Discord bots: ${discordBotConfigs.keys.joinToString()}")
 }.apply {
     boolean("discord", false, "Whether or not to list Discord bots, defaults to true", "d", true)
     boolean("minecraft", false, "Whether or not to list Minecraft bots, defaults to true", "m", true)
