@@ -14,8 +14,9 @@ val launchMinecraftBot = Command<CLIMessage>("launchcb", "Launches an instance o
         if (username.isEmpty()) randomAlphanumeric(10) else username,
         if (username.isEmpty()) "" else getOptionalArgument("password"),
         getOptionalArgument("prefix"),
-        getOptionalArgument("connection_log"),
-        getOptionalArgument("chat_log")
+        getOptionalArgument("log_connection"),
+        getOptionalArgument("log_respawns"),
+        getOptionalArgument("log_chat")
     )
     if (getOptionalArgument("start")) startMinecraftBot(name)
 }.apply {
@@ -25,8 +26,9 @@ val launchMinecraftBot = Command<CLIMessage>("launchcb", "Launches an instance o
     string("username", false, "Minecraft username/email, if blank a random string is used", "u")
     string("password", false, "Minecraft account password to use, goes to offline mode if none given", "pw")
     string("prefix", false, "Prefix to listen for commands with", "pf", "!")
-    boolean("chat_log", false, "Whether or not to log chat messages to console", "cl", false)
-    boolean("connection_log", false, "Whether or not to log connection status to console", "l", false)
+    boolean("log_connection", false, "Whether or not to log connection status to console", "l", false)
+    boolean("log_respawns", false, "Whether or not to log respawns to console", "cl", false)
+    boolean("log_chat", false, "Whether or not to log chat messages to console", "cl", false)
     boolean("start", false, "Whether or not to start the bot immediately", "s", true)
 }
 

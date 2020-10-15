@@ -3,6 +3,7 @@ package dev.wnuke.hlktmc.minecraft
 import com.github.steveice10.mc.auth.data.GameProfile
 import com.github.steveice10.mc.protocol.MinecraftProtocol
 import com.github.steveice10.mc.protocol.data.game.ClientRequest
+import com.github.steveice10.mc.protocol.data.game.MessageType
 import com.github.steveice10.mc.protocol.data.message.MessageSerializer
 import com.github.steveice10.mc.protocol.packet.ingame.client.ClientChatPacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.ClientRequestPacket
@@ -19,24 +20,21 @@ import com.github.steveice10.packetlib.event.session.PacketReceivedEvent
 import com.github.steveice10.packetlib.event.session.SessionAdapter
 import com.github.steveice10.packetlib.packet.Packet
 import com.github.steveice10.packetlib.tcp.TcpSessionFactory
-import dev.wnuke.hlktmc.randomAlphanumeric
+import dev.wnuke.hlktmc.ClientConfig
 import kotlinx.coroutines.delay
 import net.daporkchop.lib.minecraft.text.component.MCTextRoot
 import net.daporkchop.lib.minecraft.text.parser.MCFormatParser
 import java.util.*
 import kotlin.collections.HashMap
 
-data class ClientConfig(
-    var address: String = "127.0.0.1",
-    var port: Int = 25565,
-    var protocol: MinecraftProtocol = MinecraftProtocol(randomAlphanumeric(8)),
-    var tcpSessionFactory: TcpSessionFactory = TcpSessionFactory(),
-    var connectionLogs: Boolean = true,
-    var chatLogs: Boolean = true
-)
-
 open class BasicClient(val config: ClientConfig = ClientConfig()) {
-    private val client = Client(config.address, config.port, config.protocol, config.tcpSessionFactory)
+    private val protocol: MinecraftProtocol =
+        if (config.password.isEmpty()) MinecraftProtocol(config.username) else MinecraftProtocol(
+            config.username,
+            config.password
+        )
+
+    private val client = Client(config.address, config.port, protocol, TcpSessionFactory())
 
     private var joined = false
 
@@ -51,7 +49,7 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
     init {
         client.session.addListener(object : SessionAdapter() {
             override fun connected(event: ConnectedEvent?) {
-                if (config.connectionLogs) println("$hostPort Connected.")
+                if (config.logConnection) connectionLog("", ConnectionLogType.CONNECTED)
             }
 
             override fun packetReceived(event: PacketReceivedEvent?) {
@@ -96,19 +94,17 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
                         val packet = event.getPacket<ServerChatPacket>()
                         val message = MCFormatParser.DEFAULT.parse(MessageSerializer.toJsonString(packet.message))
                         val messageString = message.toRawString()
-                        if (config.chatLogs) {
-                            println("${packet.senderUuid}@$hostPort (${packet.type}): $messageString")
-                        }
-                        onChat(messageString, packet.senderUuid, message)
+                        if (config.logChat) logChat(messageString, packet.type, packet.senderUuid, message)
+                        onChat(messageString, packet.type, packet.senderUuid, message)
                     }
                     is ServerCombatPacket -> {
                         respawn()
                     }
                     is ServerSpawnPlayerPacket -> {
                         val packet = event.getPacket<ServerSpawnPlayerPacket>()
-                        if (packet.uuid == config.protocol.profile.id) {
+                        if (packet.uuid == protocol.profile.id) {
                             player = Player(
-                                config.protocol.profile.name,
+                                protocol.profile.name,
                                 packet.uuid,
                                 packet.entityId,
                                 Position(packet.x, packet.y, packet.z, packet.pitch, packet.yaw)
@@ -130,15 +126,9 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
             }
 
             override fun disconnected(event: DisconnectedEvent?) {
-                if (config.connectionLogs) println(
-                    "$hostPort Disconnected, reason: ${
-                        event?.reason?.let {
-                            MCFormatParser.DEFAULT.parse(
-                                it
-                            )
-                        }
-                    }"
-                )
+                if (config.logConnection) connectionLog(event?.reason ?: "".let {
+                    MCFormatParser.DEFAULT.parse(it).toRawString()
+                }, ConnectionLogType.DISCONNECTED)
                 joined = false
                 onLeave(event ?: return)
             }
@@ -146,7 +136,7 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
     }
 
     suspend fun connect(): BasicClient {
-        if (config.connectionLogs) println("$hostPort Connecting...")
+        if (config.logConnection) connectionLog("", ConnectionLogType.CONNECTING)
         client.session.connect()
         while (!joined) {
             delay(5)
@@ -155,13 +145,14 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
     }
 
     fun disconnect(): BasicClient {
-        if (config.connectionLogs) println("$hostPort Disconnecting...")
-        client.session.disconnect("Leaving...")
+        if (config.logConnection) connectionLog("", ConnectionLogType.DISCONNECTING)
+        client.session.disconnect("")
         return this
     }
 
     fun respawn(): BasicClient {
         client.session.send(ClientRequestPacket(ClientRequest.RESPAWN))
+        if (config.logRespawns) connectionLog("", ConnectionLogType.DISCONNECTING)
         return this
     }
 
@@ -170,9 +161,35 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
         return this
     }
 
+    open fun logChat(message: String, messageType: MessageType, sender: UUID, rawMessage: MCTextRoot) {
+        println("$sender@$hostPort ($messageType): $message")
+    }
+
+    open fun connectionLog(info: String, type: ConnectionLogType) {
+        when (type) {
+            ConnectionLogType.DISCONNECTED -> {
+                if (info.isNotEmpty()) println("$hostPort Disconnected, reason: $info")
+                else println("$hostPort Disconnected")
+            }
+            ConnectionLogType.DISCONNECTING -> println("$hostPort Disconnecting")
+            ConnectionLogType.CONNECTED -> println("$hostPort Connected")
+            ConnectionLogType.RESPAWN -> println("$hostPort Respawned")
+            ConnectionLogType.CONNECTING -> println("$hostPort Connecting")
+        }
+
+    }
+
     open fun onJoin(packet: ServerJoinGamePacket) {}
     open fun onLeave(event: DisconnectedEvent) {}
-    open fun onChat(message: String, sender: UUID, rawMessage: MCTextRoot) {}
+    open fun onChat(message: String, messageType: MessageType, sender: UUID, rawMessage: MCTextRoot) {}
+}
+
+enum class ConnectionLogType {
+    CONNECTING,
+    CONNECTED,
+    DISCONNECTED,
+    DISCONNECTING,
+    RESPAWN
 }
 
 data class Player(val name: String, val uuid: UUID, var entityID: Int, var position: Position)

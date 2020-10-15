@@ -1,8 +1,6 @@
 package dev.wnuke.hlktmc
 
-import com.github.steveice10.mc.protocol.MinecraftProtocol
 import dev.wnuke.hlktmc.discord.Discord
-import dev.wnuke.hlktmc.minecraft.ClientConfig
 import dev.wnuke.hlktmc.minecraft.bot.ChatBot
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
@@ -62,9 +60,20 @@ fun readMinecraftConfig() {
     }
 }
 
-fun addMinecraftBot(name: String, server: String, port: Int, username: String, password: String, prefix: String, connectionLogs: Boolean, chatLogs: Boolean) {
+fun addMinecraftBot(
+    name: String,
+    address: String,
+    port: Int,
+    username: String,
+    password: String,
+    prefix: String,
+    logConnection: Boolean,
+    logRespawns: Boolean,
+    logChat: Boolean
+) {
     readMinecraftConfig()
-    minecraftBotConfigs[name] = ChatBotConfig(username, password, server, port, prefix, connectionLogs, chatLogs)
+    minecraftBotConfigs[name] =
+        ChatBotConfig(ClientConfig(address, port, username, password, logConnection, logRespawns, logChat), prefix)
     writeMinecraftConfig()
 }
 
@@ -92,28 +101,15 @@ fun removeDiscordBot(name: String) {
 
 fun startMinecraftBot(name: String): Boolean {
     readMinecraftConfig()
-    val bot = minecraftBotConfigs[name]?: return false
+    val bot = minecraftBotConfigs[name] ?: return false
     GlobalScope.launch {
-        minecraftBots[name] = ChatBot(
-            ClientConfig(
-                bot.server,
-                bot.port,
-                if (bot.password.isNotEmpty()) MinecraftProtocol(
-                    bot.username,
-                    bot.password
-                ) else MinecraftProtocol(bot.username),
-                connectionLogs = bot.connectionLogs,
-                chatLogs = bot.chatLogs
-            ), bot.prefix
-        ).apply {
-            connect()
-        }
+        minecraftBots[name] = ChatBot(bot.config, bot.prefix).apply { connect() }
     }
     return true
 }
 
 fun startDiscordBot(name: String): Boolean {
-    val bot = discordBotConfigs[name]?: return false
+    val bot = discordBotConfigs[name] ?: return false
     GlobalScope.launch {
         discordBots[name] = Discord(bot.token, bot.prefix).apply { start() }
     }

@@ -4,14 +4,20 @@ import kotlinx.serialization.Serializable
 import kotlin.random.Random
 
 @Serializable
-class ChatBotConfig(
-    val username: String = randomAlphanumeric(10),
-    val password: String = "",
-    val server: String = "127.0.0.1",
-    val port: Int = 25565,
-    val prefix: String = "!",
-    val connectionLogs: Boolean = false,
-    val chatLogs: Boolean = false
+data class ClientConfig(
+    var address: String = "127.0.0.1",
+    var port: Int = 25565,
+    var username: String = randomAlphanumeric(16),
+    var password: String = "",
+    var logConnection: Boolean = true,
+    var logRespawns: Boolean = true,
+    var logChat: Boolean = true
+)
+
+@Serializable
+data class ChatBotConfig(
+    var config: ClientConfig = ClientConfig(),
+    var prefix: String = "!"
 )
 
 @Serializable
