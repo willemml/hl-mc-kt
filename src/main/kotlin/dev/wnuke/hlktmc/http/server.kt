@@ -1,4 +1,3 @@
-
 import io.ktor.application.*
 import io.ktor.html.*
 import io.ktor.http.*
@@ -15,6 +14,9 @@ fun HTML.index() {
         div {
             +"Hello from Ktor in hl-mc-kt!"
             +"This will eventually be a REST API, possibly also a web UI."
+            button(name = "print") {
+                +"Click Me!"
+            }
         }
     }
 }

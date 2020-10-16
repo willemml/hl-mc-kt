@@ -1,6 +1,7 @@
 package dev.wnuke.hlktmc.minecraft.bot
 
 import com.github.steveice10.mc.protocol.data.game.MessageType
+import dev.wnuke.hlktmc.ChatBotConfig
 import dev.wnuke.hlktmc.ClientConfig
 import dev.wnuke.hlktmc.minecraft.BasicClient
 import dev.wnuke.hlktmc.minecraft.bot.commands.echo
@@ -9,7 +10,7 @@ import dev.wnuke.ktcmd.CommandManager
 import net.daporkchop.lib.minecraft.text.component.MCTextRoot
 import java.util.*
 
-class ChatBot(clientConfig: ClientConfig = ClientConfig(), private val commandPrefix: String = "!") : BasicClient(clientConfig) {
+class ChatBot(private val botConfig: ChatBotConfig) : BasicClient(botConfig.config) {
     private val commandManager = CommandManager<ChatMessage>().apply { addCommand(echo) }
 
     override fun onChat(message: String, messageType: MessageType, sender: UUID, rawMessage: MCTextRoot) {
@@ -23,8 +24,8 @@ class ChatBot(clientConfig: ClientConfig = ClientConfig(), private val commandPr
                 break
             }
         }
-        if (messageFormatted.startsWith(commandPrefix) || commandPrefix.isEmpty()) {
-            val cause = ChatMessage(messageFormatted.removePrefix(commandPrefix), sender, this, rawMessage)
+        if (messageFormatted.startsWith(botConfig.prefix) || botConfig.prefix.isEmpty()) {
+            val cause = ChatMessage(messageFormatted.removePrefix(botConfig.prefix), sender, this, rawMessage)
             commandManager.runCommand(cause)
         }
     }

@@ -1,5 +1,6 @@
 package dev.wnuke.hlktmc.discord
 
+import dev.wnuke.hlktmc.DiscordConfig
 import dev.wnuke.hlktmc.discord.commands.ping
 import dev.wnuke.ktcmd.Call
 import dev.wnuke.ktcmd.CommandManager
@@ -11,14 +12,14 @@ import net.ayataka.kordis.event.EventHandler
 import net.ayataka.kordis.event.events.message.MessageReceiveEvent
 import java.awt.Color
 
-open class Discord(private val botToken: String, private val commandPrefix: String = "!") {
+open class Discord(private val config: DiscordConfig) {
     open val commandManager = CommandManager<DiscordMessage>().apply { loadCommands(listOf(ping).toTypedArray()) }
 
     open var client: DiscordClient? = null
 
     open suspend fun start() {
         client = Kordis.create {
-            token = botToken
+            token = config.token
             addListener(this@Discord)
         }
     }
@@ -29,8 +30,8 @@ open class Discord(private val botToken: String, private val commandPrefix: Stri
 
     @EventHandler
     open fun onMessageReceive(event: MessageReceiveEvent) {
-        if (event.message.content.startsWith(commandPrefix)) {
-            commandManager.runCommand(DiscordMessage(event, event.message.content.removePrefix(commandPrefix)))
+        if (event.message.content.startsWith(config.prefix)) {
+            commandManager.runCommand(DiscordMessage(event, event.message.content.removePrefix(config.prefix)))
         }
     }
 }

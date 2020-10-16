@@ -42,7 +42,6 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
 
     private val hostPort = "${config.address}:${config.port}"
 
-
     private val parser = AutoMCFormatParser(TranslationSource.ofMap(hashMapOf(Pair("chat.type.text", "<%s> %s"), Pair("chat.type.announcement", "[%s] %s"))))
 
     var player: Player? = null

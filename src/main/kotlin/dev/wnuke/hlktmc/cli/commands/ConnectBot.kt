@@ -1,11 +1,12 @@
 package dev.wnuke.hlktmc.cli.commands
 
+import chatBotManager
 import dev.wnuke.hlktmc.cli.CLIMessage
-import dev.wnuke.hlktmc.startMinecraftBot
 import dev.wnuke.ktcmd.Command
+import discordBotManager
 
 val connectBot = Command<CLIMessage>("connect", "Connects a bot.", arrayListOf("c", "cb"), true) {
-    if (startMinecraftBot(getArgument("botname")) || startMinecraftBot(getArgument("botname"))) it.success("Bot started.") else it.error(
+    if (chatBotManager.start(getArgument("botname")) || discordBotManager.start(getArgument("botname"))) it.success("Bot started.") else it.error(
         "No bot with that name."
     )
 }.apply {
