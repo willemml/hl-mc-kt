@@ -9,13 +9,13 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
 
-abstract class BotManager<T : Config, U>(private val configPath: String) {
+abstract class BotManager<T, U>(private val configPath: String) {
     var botConfigs = HashMap<String, T>()
     val bots = HashMap<String, U>()
 
     private val configFile = File(configPath).apply {
         parentFile.mkdirs()
-        if (createNewFile()) this.writeText(Json.encodeToString(botConfigs))
+        if (createNewFile()) this.writeText(encodeConfig(botConfigs))
     }
 
     init {
@@ -25,12 +25,12 @@ abstract class BotManager<T : Config, U>(private val configPath: String) {
     private fun writeConfig() {
         configFile.parentFile.mkdirs()
         configFile.createNewFile()
-        configFile.writeText(Json.encodeToString(botConfigs))
+        configFile.writeText(encodeConfig(botConfigs))
     }
 
     private fun readConfig() {
         try {
-            botConfigs = Json.decodeFromString(configFile.readText())
+            botConfigs = decodeConfig(configFile.readText())
         } catch (e: SerializationException) {
             println("Broken config file, backing up and resetting...")
             configFile.copyTo(File("$configPath.old"), true)
@@ -39,6 +39,8 @@ abstract class BotManager<T : Config, U>(private val configPath: String) {
         }
     }
 
+    internal abstract fun encodeConfig(configs: HashMap<String, T>): String
+    internal abstract fun decodeConfig(jsonString: String): HashMap<String, T>
     internal abstract fun startBot(config: T): U
 
     fun add(name: String, config: T, overwrite: Boolean = false): Boolean {

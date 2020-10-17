@@ -3,6 +3,7 @@ package dev.wnuke.hlktmc
 import kotlinx.serialization.Serializable
 import kotlin.random.Random
 
+@Serializable
 abstract class Config
 
 @Serializable
@@ -14,16 +15,16 @@ data class ClientConfig(
     var logConnection: Boolean = true,
     var logRespawns: Boolean = true,
     var logChat: Boolean = true
-) : Config()
+)
 
 @Serializable
 data class ChatBotConfig(
     var config: ClientConfig = ClientConfig(),
     var prefix: String = "!"
-) : Config()
+)
 
 @Serializable
-class DiscordConfig(val token: String = "", val prefix: String = "!") : Config()
+class DiscordConfig(val token: String = "", val prefix: String = "!")
 
 fun randomAlphanumeric(length: Int): String {
     return (1..length).map { alphanumeric[Random.nextInt(0, alphanumeric.length)] }.joinToString("")

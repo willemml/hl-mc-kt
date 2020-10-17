@@ -21,8 +21,8 @@ fun HTML.index() {
     }
 }
 
-fun server() {
-    embeddedServer(Jetty, port = 8080, host = "127.0.0.1") {
+fun server(port: Int) {
+    embeddedServer(Jetty, port, host = "127.0.0.1") {
         routing {
             get("/") {
                 call.respondHtml(HttpStatusCode.OK, HTML::index)
