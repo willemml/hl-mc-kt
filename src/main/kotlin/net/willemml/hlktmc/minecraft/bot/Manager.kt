@@ -1,7 +1,7 @@
-package dev.wnuke.hlktmc.minecraft.bot
+package net.willemml.hlktmc.minecraft.bot
 
-import dev.wnuke.hlktmc.BotManager
-import dev.wnuke.hlktmc.ChatBotConfig
+import net.willemml.hlktmc.BotManager
+import net.willemml.hlktmc.ChatBotConfig
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromString

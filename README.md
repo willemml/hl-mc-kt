@@ -1,10 +1,8 @@
-[![Discord](https://img.shields.io/discord/745728805678874800?logo=discord)](https://discord.gg/MwBvhEz)
-[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/wnuke/hl-mc-kt/Java%20CI%20with%20Gradle?logo=github)](https://github.com/wnuke/hl-mc-kt/actions?query=workflow%3A%22Java%20CI%20with%20Gradle%22)
-[![](https://jitpack.io/v/dev.wnuke/hl-mc-kt.svg)](https://jitpack.io/#dev.wnuke/hl-mc-kt)
+[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/willemml/hl-mc-kt/Java%20CI%20with%20Gradle?logo=github)](https://github.com/wnuke/hl-mc-kt/actions?query=workflow%3A%22Java%20CI%20with%20Gradle%22)
 # Headless Minecraft Kotlin (hl-mc-kt)
 
 The goal is to have full chat support, movement support (for pathing), support for crafting things/interacting with the world so that this could be used as a bot for automation, it should also be lightweight and be threadable/connect to multiple servers at once or one server with multiple accounts.
-Uses [kt-cmd](https://github.com/wnuke-dev/kt-cmd) for the command system.
+Uses [kt-cmd](https://github.com/willemml/kt-cmd) for the command system.
 
 #### Credits
  - Steveice10's [MCProtocolLib](https://github.com/Steveice10/MCProtocolLib) for saving me lots of time.

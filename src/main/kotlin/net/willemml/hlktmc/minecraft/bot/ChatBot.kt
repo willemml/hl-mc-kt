@@ -1,12 +1,11 @@
-package dev.wnuke.hlktmc.minecraft.bot
+package net.willemml.hlktmc.minecraft.bot
 
 import com.github.steveice10.mc.protocol.data.game.MessageType
-import dev.wnuke.hlktmc.ChatBotConfig
-import dev.wnuke.hlktmc.ClientConfig
-import dev.wnuke.hlktmc.minecraft.BasicClient
-import dev.wnuke.hlktmc.minecraft.bot.commands.echo
-import dev.wnuke.ktcmd.Call
-import dev.wnuke.ktcmd.CommandManager
+import net.willemml.hlktmc.ChatBotConfig
+import net.willemml.hlktmc.minecraft.BasicClient
+import net.willemml.hlktmc.minecraft.bot.commands.echo
+import net.willemml.ktcmd.Call
+import net.willemml.ktcmd.CommandManager
 import net.daporkchop.lib.minecraft.text.component.MCTextRoot
 import java.util.*
 

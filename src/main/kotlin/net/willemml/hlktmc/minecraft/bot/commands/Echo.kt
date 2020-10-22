@@ -1,7 +1,7 @@
-package dev.wnuke.hlktmc.minecraft.bot.commands
+package net.willemml.hlktmc.minecraft.bot.commands
 
-import dev.wnuke.hlktmc.minecraft.bot.ChatMessage
-import dev.wnuke.ktcmd.Command
+import net.willemml.hlktmc.minecraft.bot.ChatMessage
+import net.willemml.ktcmd.Command
 
 val echo = Command<ChatMessage>("echo", "Repeat a piece of text.", arrayListOf("e"), true) {
     it.respond(getArgument("text"))

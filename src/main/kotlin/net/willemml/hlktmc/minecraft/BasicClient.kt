@@ -1,4 +1,4 @@
-package dev.wnuke.hlktmc.minecraft
+package net.willemml.hlktmc.minecraft
 
 import com.github.steveice10.mc.auth.data.GameProfile
 import com.github.steveice10.mc.protocol.MinecraftProtocol
@@ -20,11 +20,10 @@ import com.github.steveice10.packetlib.event.session.PacketReceivedEvent
 import com.github.steveice10.packetlib.event.session.SessionAdapter
 import com.github.steveice10.packetlib.packet.Packet
 import com.github.steveice10.packetlib.tcp.TcpSessionFactory
-import dev.wnuke.hlktmc.ClientConfig
+import net.willemml.hlktmc.ClientConfig
 import kotlinx.coroutines.delay
 import net.daporkchop.lib.minecraft.text.component.MCTextRoot
 import net.daporkchop.lib.minecraft.text.parser.AutoMCFormatParser
-import net.daporkchop.lib.minecraft.text.parser.MCFormatParser
 import net.daporkchop.lib.minecraft.text.util.TranslationSource
 import java.util.*
 import kotlin.collections.HashMap

@@ -1,10 +1,13 @@
-package dev.wnuke.hlktmc.cli.commands
+package net.willemml.hlktmc.cli.commands
 
 import chatBotManager
-import dev.wnuke.hlktmc.*
-import dev.wnuke.hlktmc.cli.CLIMessage
-import dev.wnuke.ktcmd.Command
+import net.willemml.hlktmc.cli.CLIMessage
+import net.willemml.ktcmd.Command
 import discordBotManager
+import net.willemml.hlktmc.ChatBotConfig
+import net.willemml.hlktmc.ClientConfig
+import net.willemml.hlktmc.DiscordConfig
+import net.willemml.hlktmc.randomAlphanumeric
 
 val launchMinecraftBot = Command<CLIMessage>("launchcb", "Launches an instance of Minecraft chat bot.", arrayListOf("lcb", "lc", "lmc")) {
     val name = getArgument<String>("name")
@@ -50,7 +53,7 @@ val launchDiscordBot = Command<CLIMessage>("launchdb", "Launches an instance of 
 }
 
 val launchAllBots = Command<CLIMessage>("launchbots", "Launches all bots from config file.", arrayListOf("lb")) {
-    if (getOptionalArgument("minecraft")) chatBotManager.startAll(10000)
+    if (getOptionalArgument("minecraft")) chatBotManager.startAll(2000)
     if (getOptionalArgument("discord")) discordBotManager.startAll()
 }.apply {
     boolean("discord", false, "Whether or not to start all Discord bots, defaults to true", "d", true)

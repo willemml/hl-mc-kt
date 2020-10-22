@@ -1,9 +1,9 @@
-package dev.wnuke.hlktmc.discord
+package net.willemml.hlktmc.discord
 
-import dev.wnuke.hlktmc.DiscordConfig
-import dev.wnuke.hlktmc.discord.commands.ping
-import dev.wnuke.ktcmd.Call
-import dev.wnuke.ktcmd.CommandManager
+import net.willemml.hlktmc.DiscordConfig
+import net.willemml.hlktmc.discord.commands.ping
+import net.willemml.ktcmd.Call
+import net.willemml.ktcmd.CommandManager
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import net.ayataka.kordis.DiscordClient

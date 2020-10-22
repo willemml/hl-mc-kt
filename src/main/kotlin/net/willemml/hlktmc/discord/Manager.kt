@@ -1,7 +1,7 @@
-package dev.wnuke.hlktmc.discord
+package net.willemml.hlktmc.discord
 
-import dev.wnuke.hlktmc.BotManager
-import dev.wnuke.hlktmc.DiscordConfig
+import net.willemml.hlktmc.BotManager
+import net.willemml.hlktmc.DiscordConfig
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromString

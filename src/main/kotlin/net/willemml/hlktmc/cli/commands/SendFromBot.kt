@@ -1,8 +1,8 @@
-package dev.wnuke.hlktmc.cli.commands
+package net.willemml.hlktmc.cli.commands
 
 import chatBotManager
-import dev.wnuke.hlktmc.cli.CLIMessage
-import dev.wnuke.ktcmd.Command
+import net.willemml.hlktmc.cli.CLIMessage
+import net.willemml.ktcmd.Command
 
 val sendFromMinecraftBot = Command<CLIMessage>("sendmc", "Sends a message from a Minecraft bot instance.", arrayListOf("m", "sm", "smc"), true) {
     val name = getArgument<String>("botname")

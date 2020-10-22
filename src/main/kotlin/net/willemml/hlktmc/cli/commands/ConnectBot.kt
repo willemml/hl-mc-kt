@@ -1,8 +1,8 @@
-package dev.wnuke.hlktmc.cli.commands
+package net.willemml.hlktmc.cli.commands
 
 import chatBotManager
-import dev.wnuke.hlktmc.cli.CLIMessage
-import dev.wnuke.ktcmd.Command
+import net.willemml.hlktmc.cli.CLIMessage
+import net.willemml.ktcmd.Command
 import discordBotManager
 
 val connectBot = Command<CLIMessage>("connect", "Connects a bot.", arrayListOf("c", "cb"), true) {

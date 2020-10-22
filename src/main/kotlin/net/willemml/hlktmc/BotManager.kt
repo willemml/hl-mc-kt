@@ -1,4 +1,4 @@
-package dev.wnuke.hlktmc
+package net.willemml.hlktmc
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay

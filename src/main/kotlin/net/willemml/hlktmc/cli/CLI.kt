@@ -1,8 +1,9 @@
-package dev.wnuke.hlktmc.cli
+package net.willemml.hlktmc.cli
 
-import dev.wnuke.hlktmc.cli.commands.*
-import dev.wnuke.ktcmd.Call
-import dev.wnuke.ktcmd.CommandManager
+import net.willemml.hlktmc.cli.commands.*
+import net.willemml.ktcmd.Call
+import net.willemml.ktcmd.CommandManager
+import net.willemml.hlktmc.cli.commands.*
 
 class CLI {
     private val commandManager = CommandManager<CLIMessage>().apply {
