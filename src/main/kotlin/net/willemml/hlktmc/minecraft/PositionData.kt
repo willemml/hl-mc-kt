@@ -58,3 +58,5 @@ data class PositionDelta(var deltaX: Double = 0.0, var deltaY: Double = 0.0, var
         fun between(a: Position, b: Position) = PositionDelta(b.x.minus(a.x), b.y.minus(a.y), b.z.minus(a.z))
     }
 }
+
+data class ChunkPosition(val x: Int = 0, val z: Int = 0)

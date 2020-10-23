@@ -4,11 +4,13 @@ import com.github.steveice10.mc.auth.data.GameProfile
 import com.github.steveice10.mc.protocol.MinecraftProtocol
 import com.github.steveice10.mc.protocol.data.game.ClientRequest
 import com.github.steveice10.mc.protocol.data.game.MessageType
+import com.github.steveice10.mc.protocol.data.game.chunk.Column
 import com.github.steveice10.mc.protocol.data.game.entity.player.GameMode
 import com.github.steveice10.mc.protocol.data.game.entity.player.PositionElement
 import com.github.steveice10.mc.protocol.data.message.MessageSerializer
 import com.github.steveice10.mc.protocol.packet.ingame.client.ClientChatPacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.ClientRequestPacket
+import com.github.steveice10.mc.protocol.packet.ingame.client.ClientSettingsPacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerPositionPacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerPositionRotationPacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerRotationPacket
@@ -17,7 +19,9 @@ import com.github.steveice10.mc.protocol.packet.ingame.server.*
 import com.github.steveice10.mc.protocol.packet.ingame.server.entity.*
 import com.github.steveice10.mc.protocol.packet.ingame.server.entity.player.ServerPlayerHealthPacket
 import com.github.steveice10.mc.protocol.packet.ingame.server.entity.player.ServerPlayerPositionRotationPacket
+import com.github.steveice10.mc.protocol.packet.ingame.server.world.ServerChunkDataPacket
 import com.github.steveice10.mc.protocol.packet.ingame.server.world.ServerSpawnPositionPacket
+import com.github.steveice10.mc.protocol.packet.ingame.server.world.ServerUpdateViewPositionPacket
 import com.github.steveice10.packetlib.Client
 import com.github.steveice10.packetlib.event.session.ConnectedEvent
 import com.github.steveice10.packetlib.event.session.DisconnectedEvent
@@ -52,6 +56,8 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
     var positionDelta = PositionDelta()
     var rotationDelta = RotationDelta()
 
+    val chunks = HashMap<ChunkPosition, Column>()
+
     var playerListHeader = ""
     var playerListFooter = ""
     val playerListEntries = HashMap<UUID, GameProfile>()
@@ -68,6 +74,7 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
                         val packet = event.getPacket<ServerJoinGamePacket>()
                         player.entityID = packet.entityId
                         player.gameMode = packet.gameMode
+                        sendClientSettings()
                         joined = true
                         onJoin(packet)
                     }
@@ -95,6 +102,29 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
                         player.health.saturation = packet.saturation
                         player.health.food = packet.food
                         if (player.health.health <= 0) respawn()
+                    }
+                    is ServerUpdateViewPositionPacket -> {
+                        val packet = event.getPacket<ServerUpdateViewPositionPacket>()
+                        player.chunk = ChunkPosition(packet.chunkX, packet.chunkZ)
+                        for (chunk in chunks.keys) {
+                            if (chunk.x > packet.chunkX + config.chunkUnloadDistance ||
+                                    chunk.x < packet.chunkX - config.chunkUnloadDistance ||
+                                    chunk.z < packet.chunkZ - config.chunkUnloadDistance ||
+                                    chunk.z > packet.chunkZ + config.chunkUnloadDistance
+                            ) {
+                                chunks.remove(chunk)
+                            }
+                        }
+                    }
+                    is ServerChunkDataPacket -> {
+                        val packet = event.getPacket<ServerChunkDataPacket>()
+                        if (!(packet.column.x > player.chunk.x + config.chunkUnloadDistance ||
+                                packet.column.x < player.chunk.x - config.chunkUnloadDistance ||
+                                packet.column.z < player.chunk.z - config.chunkUnloadDistance ||
+                                packet.column.z > player.chunk.z + config.chunkUnloadDistance
+                        )) {
+                            chunks[ChunkPosition(packet.column.x, packet.column.z)] = packet.column
+                        }
                     }
                     is ServerEntityTeleportPacket -> {
                         val packet = event.getPacket<ServerEntityTeleportPacket>()
@@ -213,6 +243,15 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
         return this
     }
 
+    fun sendClientSettings() {
+        client.session.send(ClientSettingsPacket(config.locale, config.chunkUnloadDistance, config.chatVisibility, false, config.visibleParts, config.preferredHand))
+    }
+
+    fun changeChunkDistance(newDistance: Int) {
+        config.chunkUnloadDistance = newDistance
+        sendClientSettings()
+    }
+
     fun getNameFromID(id: UUID) = playerListEntries[id]?.name
 
     open fun logChat(message: String, messageType: MessageType, sender: UUID, rawMessage: MCTextRoot) {
@@ -251,6 +290,7 @@ data class Player(val name: String,
                   var entityID: Int = 0,
                   var onGround: Boolean = true,
                   var position: Position = Position(),
+                  var chunk: ChunkPosition = ChunkPosition(),
                   var rotation: Rotation = Rotation(),
                   var spawnPoint: Position = Position(),
                   var health: Health = Health(),
