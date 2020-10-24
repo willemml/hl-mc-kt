@@ -4,8 +4,6 @@ import com.github.steveice10.mc.auth.data.GameProfile
 import com.github.steveice10.mc.protocol.MinecraftProtocol
 import com.github.steveice10.mc.protocol.data.game.ClientRequest
 import com.github.steveice10.mc.protocol.data.game.MessageType
-import com.github.steveice10.mc.protocol.data.game.chunk.Column
-import com.github.steveice10.mc.protocol.data.game.entity.player.GameMode
 import com.github.steveice10.mc.protocol.data.game.entity.player.PositionElement
 import com.github.steveice10.mc.protocol.data.message.MessageSerializer
 import com.github.steveice10.mc.protocol.packet.ingame.client.ClientChatPacket
@@ -13,8 +11,14 @@ import com.github.steveice10.mc.protocol.packet.ingame.client.ClientRequestPacke
 import com.github.steveice10.mc.protocol.packet.ingame.client.ClientSettingsPacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerPositionRotationPacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.world.ClientTeleportConfirmPacket
-import com.github.steveice10.mc.protocol.packet.ingame.server.*
-import com.github.steveice10.mc.protocol.packet.ingame.server.entity.*
+import com.github.steveice10.mc.protocol.packet.ingame.server.ServerChatPacket
+import com.github.steveice10.mc.protocol.packet.ingame.server.ServerJoinGamePacket
+import com.github.steveice10.mc.protocol.packet.ingame.server.ServerPlayerListDataPacket
+import com.github.steveice10.mc.protocol.packet.ingame.server.ServerPlayerListEntryPacket
+import com.github.steveice10.mc.protocol.packet.ingame.server.entity.ServerEntityPositionPacket
+import com.github.steveice10.mc.protocol.packet.ingame.server.entity.ServerEntityPositionRotationPacket
+import com.github.steveice10.mc.protocol.packet.ingame.server.entity.ServerEntityRotationPacket
+import com.github.steveice10.mc.protocol.packet.ingame.server.entity.ServerEntityTeleportPacket
 import com.github.steveice10.mc.protocol.packet.ingame.server.entity.player.ServerPlayerHealthPacket
 import com.github.steveice10.mc.protocol.packet.ingame.server.entity.player.ServerPlayerPositionRotationPacket
 import com.github.steveice10.mc.protocol.packet.ingame.server.world.ServerChunkDataPacket
@@ -33,8 +37,10 @@ import net.daporkchop.lib.minecraft.text.component.MCTextRoot
 import net.daporkchop.lib.minecraft.text.parser.AutoMCFormatParser
 import net.daporkchop.lib.minecraft.text.util.TranslationSource
 import net.willemml.hlktmc.ClientConfig
+import net.willemml.hlktmc.minecraft.player.*
+import net.willemml.hlktmc.minecraft.world.WorldManager
+import net.willemml.hlktmc.minecraft.world.types.ChunkPos
 import java.util.*
-import kotlin.ConcurrentModificationException
 import kotlin.collections.HashMap
 
 open class BasicClient(val config: ClientConfig = ClientConfig()) {
@@ -52,11 +58,10 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
 
     private val parser = AutoMCFormatParser(TranslationSource.ofMap(hashMapOf(Pair("chat.type.text", "<%s> %s"), Pair("chat.type.announcement", "[%s] %s"))))
 
+    var world = WorldManager()
     var player = Player(protocol.profile.name, protocol.profile.id ?: UUID.randomUUID())
     var positionDelta = PositionDelta()
     var rotationDelta = RotationDelta()
-
-    val chunks = HashMap<ChunkPosition, Column>()
 
     var timer = Timer()
 
@@ -64,10 +69,12 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
         override fun run() {
             if (joined) {
                 try {
+                    player.onGround = true
                     val yDecimal = player.position.y - player.position.y.toInt()
-                    val isBlockUnderSolid = isBlockSolid(player.position.copy(y = player.position.y.minus(1)))
-                    if (yDecimal != 0.0 || isBlockUnderSolid == false) {
-                        if (yDecimal >= 0.1 || (isBlockUnderSolid == false && yDecimal == 0.0)) positionDelta.deltaY -= 0.1
+                    val isBlockUnderSolid = world.isSolid(player.position.copy(y = player.position.y.minus(1)).blockPos())
+                    if (yDecimal != 0.0 || !isBlockUnderSolid) {
+                        player.onGround = false
+                        if (yDecimal >= 0.2 || (!isBlockUnderSolid && yDecimal == 0.0)) positionDelta.deltaY -= 0.2
                         else positionDelta.deltaY -= yDecimal
                     }
                     if (!positionDelta.isZero() || !rotationDelta.isZero()) checkMovement()
@@ -129,26 +136,12 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
                     }
                     is ServerUpdateViewPositionPacket -> {
                         val packet = event.getPacket<ServerUpdateViewPositionPacket>()
-                        player.chunk = ChunkPosition(packet.chunkX, packet.chunkZ)
-                        for (chunk in chunks.keys) {
-                            if (chunk.x > packet.chunkX + config.chunkUnloadDistance ||
-                                    chunk.x < packet.chunkX - config.chunkUnloadDistance ||
-                                    chunk.z < packet.chunkZ - config.chunkUnloadDistance ||
-                                    chunk.z > packet.chunkZ + config.chunkUnloadDistance
-                            ) {
-                                chunks.remove(chunk)
-                            }
-                        }
+                        player.chunk = ChunkPos(packet.chunkX, packet.chunkZ)
+                        world.pruneColumns(player.chunk, config.chunkUnloadDistance)
                     }
                     is ServerChunkDataPacket -> {
                         val packet = event.getPacket<ServerChunkDataPacket>()
-                        if (!(packet.column.x > player.chunk.x + config.chunkUnloadDistance ||
-                                        packet.column.x < player.chunk.x - config.chunkUnloadDistance ||
-                                        packet.column.z < player.chunk.z - config.chunkUnloadDistance ||
-                                        packet.column.z > player.chunk.z + config.chunkUnloadDistance
-                                        )) {
-                            chunks[ChunkPosition(packet.column.x, packet.column.z)] = packet.column
-                        }
+                        world.addColumn(packet.column, player.chunk, config.chunkUnloadDistance)
                     }
                     is ServerEntityTeleportPacket -> {
                         val packet = event.getPacket<ServerEntityTeleportPacket>()
@@ -234,28 +227,14 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
         positionDelta.zero()
         player.rotation.addDelta(rotationDelta)
         rotationDelta.zero()
-        if (isBlockSolid(player.position) == true) player.position = previousPosition
+        if (world.isSolid(player.position.blockPos())) player.position = previousPosition
         client.session.send(ClientPlayerPositionRotationPacket(true,
-                player.position.x.plus(positionDelta.deltaX),
-                player.position.y.plus(positionDelta.deltaY),
-                player.position.z.plus(positionDelta.deltaZ),
-                player.rotation.yaw.plus(rotationDelta.yawDelta),
-                player.rotation.pitch.plus(rotationDelta.pitchDelta)
+                player.position.x,
+                player.position.y,
+                player.position.z,
+                player.rotation.yaw,
+                player.rotation.pitch
         ))
-    }
-
-    private fun isBlockSolid(position: Position): Boolean? {
-        val chunkPos = ChunkPosition.fromPosition(position)
-        if (chunkPos.y > chunks.size) return true
-        val column = chunks[chunkPos.copy(y = 0)] ?: return null
-        val chunk = column.chunks[chunkPos.y] ?: return true
-        val positionInChunk = chunkPos.getChunkPosition(position)
-        try {
-            val block = chunk.get(positionInChunk.x.toInt(), positionInChunk.y.toInt(), positionInChunk.z.toInt())
-            return block != 0
-        } catch (_: IndexOutOfBoundsException) {
-            return true
-        }
     }
 
     fun disconnect(): BasicClient {
@@ -316,21 +295,4 @@ enum class ConnectionLogType {
     DISCONNECTING,
     RESPAWN
 }
-
-data class Player(val name: String,
-                  val uuid: UUID,
-                  var entityID: Int = 0,
-                  var onGround: Boolean = true,
-                  var position: Position = Position(),
-                  var chunk: ChunkPosition = ChunkPosition(),
-                  var rotation: Rotation = Rotation(),
-                  var spawnPoint: Position = Position(),
-                  var health: Health = Health(),
-                  var gameMode: GameMode = GameMode.SPECTATOR
-)
-
-data class Health(var health: Float = 0.0f,
-                  var saturation: Float = 0.0f,
-                  var food: Int = 0
-)
 
