@@ -11,9 +11,7 @@ import com.github.steveice10.mc.protocol.data.message.MessageSerializer
 import com.github.steveice10.mc.protocol.packet.ingame.client.ClientChatPacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.ClientRequestPacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.ClientSettingsPacket
-import com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerPositionPacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerPositionRotationPacket
-import com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerRotationPacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.world.ClientTeleportConfirmPacket
 import com.github.steveice10.mc.protocol.packet.ingame.server.*
 import com.github.steveice10.mc.protocol.packet.ingame.server.entity.*
@@ -22,6 +20,7 @@ import com.github.steveice10.mc.protocol.packet.ingame.server.entity.player.Serv
 import com.github.steveice10.mc.protocol.packet.ingame.server.world.ServerChunkDataPacket
 import com.github.steveice10.mc.protocol.packet.ingame.server.world.ServerSpawnPositionPacket
 import com.github.steveice10.mc.protocol.packet.ingame.server.world.ServerUpdateViewPositionPacket
+import com.github.steveice10.mc.protocol.packet.login.server.LoginSuccessPacket
 import com.github.steveice10.packetlib.Client
 import com.github.steveice10.packetlib.event.session.ConnectedEvent
 import com.github.steveice10.packetlib.event.session.DisconnectedEvent
@@ -35,6 +34,7 @@ import net.daporkchop.lib.minecraft.text.parser.AutoMCFormatParser
 import net.daporkchop.lib.minecraft.text.util.TranslationSource
 import net.willemml.hlktmc.ClientConfig
 import java.util.*
+import kotlin.ConcurrentModificationException
 import kotlin.collections.HashMap
 
 open class BasicClient(val config: ClientConfig = ClientConfig()) {
@@ -52,11 +52,30 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
 
     private val parser = AutoMCFormatParser(TranslationSource.ofMap(hashMapOf(Pair("chat.type.text", "<%s> %s"), Pair("chat.type.announcement", "[%s] %s"))))
 
-    var player = Player(protocol.profile.name, protocol.profile.id)
+    var player = Player(protocol.profile.name, protocol.profile.id ?: UUID.randomUUID())
     var positionDelta = PositionDelta()
     var rotationDelta = RotationDelta()
 
     val chunks = HashMap<ChunkPosition, Column>()
+
+    var timer = Timer()
+
+    val ticker = object : TimerTask() {
+        override fun run() {
+            if (joined) {
+                try {
+                    val yDecimal = player.position.y - player.position.y.toInt()
+                    val isBlockUnderSolid = isBlockSolid(player.position.copy(y = player.position.y.minus(1)))
+                    if (yDecimal != 0.0 || isBlockUnderSolid == false) {
+                        if (yDecimal >= 0.1 || (isBlockUnderSolid == false && yDecimal == 0.0)) positionDelta.deltaY -= 0.1
+                        else positionDelta.deltaY -= yDecimal
+                    }
+                    if (!positionDelta.isZero() || !rotationDelta.isZero()) checkMovement()
+                } catch (_: ConcurrentModificationException) {
+                }
+            }
+        }
+    }
 
     var playerListHeader = ""
     var playerListFooter = ""
@@ -76,7 +95,12 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
                         player.gameMode = packet.gameMode
                         sendClientSettings()
                         joined = true
+                        timer.schedule(ticker, 0, 50)
                         onJoin(packet)
+                    }
+                    is LoginSuccessPacket -> {
+                        val packet = event.getPacket<LoginSuccessPacket>()
+                        player = Player(packet.profile.name, packet.profile.id)
                     }
                     is ServerSpawnPositionPacket -> {
                         val position = event.getPacket<ServerSpawnPositionPacket>().position
@@ -119,10 +143,10 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
                     is ServerChunkDataPacket -> {
                         val packet = event.getPacket<ServerChunkDataPacket>()
                         if (!(packet.column.x > player.chunk.x + config.chunkUnloadDistance ||
-                                packet.column.x < player.chunk.x - config.chunkUnloadDistance ||
-                                packet.column.z < player.chunk.z - config.chunkUnloadDistance ||
-                                packet.column.z > player.chunk.z + config.chunkUnloadDistance
-                        )) {
+                                        packet.column.x < player.chunk.x - config.chunkUnloadDistance ||
+                                        packet.column.z < player.chunk.z - config.chunkUnloadDistance ||
+                                        packet.column.z > player.chunk.z + config.chunkUnloadDistance
+                                        )) {
                             chunks[ChunkPosition(packet.column.x, packet.column.z)] = packet.column
                         }
                     }
@@ -162,36 +186,12 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
                         }
                         player.rotation
                     }
-                    is ServerEntityMovementPacket -> {
-                        val packet = event.getPacket<ServerEntityMovementPacket>()
-                        if (packet.entityId == player.entityID) {
-                            if (!positionDelta.isZero() && !rotationDelta.isZero()) {
-                                client.session.send(ClientPlayerPositionRotationPacket(true,
-                                        positionDelta.deltaX,
-                                        positionDelta.deltaY,
-                                        positionDelta.deltaZ,
-                                        player.rotation.yaw.plus(rotationDelta.yawDelta),
-                                        player.rotation.pitch.plus(rotationDelta.pitchDelta)
-                                ))
-                            } else {
-                                if (!positionDelta.isZero()) {
-                                    client.session.send(ClientPlayerPositionPacket(true, player.position.x, player.position.y, player.position.z))
-                                }
-                                if (!rotationDelta.isZero()) {
-                                    client.session.send(ClientPlayerRotationPacket(true, player.rotation.yaw, player.rotation.pitch))
-                                }
-                            }
-                        }
-                    }
                     is ServerChatPacket -> {
                         val packet = event.getPacket<ServerChatPacket>()
                         val message = parser.parse(MessageSerializer.toJsonString(packet.message))
                         val messageString = message.toRawString()
                         if (config.logChat) logChat(messageString, packet.type, packet.senderUuid, message)
                         onChat(messageString, packet.type, packet.senderUuid, message)
-                    }
-                    is ServerCombatPacket -> {
-                        respawn()
                     }
                     is ServerPlayerListEntryPacket -> {
                         val packet = event.getPacket<ServerPlayerListEntryPacket>()
@@ -211,6 +211,8 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
                 if (config.logConnection) connectionLog(event?.reason ?: "".let {
                     parser.parse(it).toRawString()
                 }, ConnectionLogType.DISCONNECTED)
+                timer.cancel()
+                timer = Timer()
                 joined = false
                 onLeave(event ?: return)
             }
@@ -224,6 +226,36 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
             delay(5)
         }
         return this
+    }
+
+    private fun checkMovement() {
+        val previousPosition = player.position
+        player.position.addDelta(positionDelta)
+        positionDelta.zero()
+        player.rotation.addDelta(rotationDelta)
+        rotationDelta.zero()
+        if (isBlockSolid(player.position) == true) player.position = previousPosition
+        client.session.send(ClientPlayerPositionRotationPacket(true,
+                player.position.x.plus(positionDelta.deltaX),
+                player.position.y.plus(positionDelta.deltaY),
+                player.position.z.plus(positionDelta.deltaZ),
+                player.rotation.yaw.plus(rotationDelta.yawDelta),
+                player.rotation.pitch.plus(rotationDelta.pitchDelta)
+        ))
+    }
+
+    private fun isBlockSolid(position: Position): Boolean? {
+        val chunkPos = ChunkPosition.fromPosition(position)
+        if (chunkPos.y > chunks.size) return true
+        val column = chunks[chunkPos.copy(y = 0)] ?: return null
+        val chunk = column.chunks[chunkPos.y] ?: return true
+        val positionInChunk = chunkPos.getChunkPosition(position)
+        try {
+            val block = chunk.get(positionInChunk.x.toInt(), positionInChunk.y.toInt(), positionInChunk.z.toInt())
+            return block != 0
+        } catch (_: IndexOutOfBoundsException) {
+            return true
+        }
     }
 
     fun disconnect(): BasicClient {

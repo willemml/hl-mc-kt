@@ -1,6 +1,7 @@
 package net.willemml.hlktmc.minecraft
 
 import kotlin.math.pow
+import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
 data class Rotation(var yaw: Float = 0.0f, var pitch: Float = 0.0f) {
@@ -21,6 +22,11 @@ data class Rotation(var yaw: Float = 0.0f, var pitch: Float = 0.0f) {
 
 data class RotationDelta(var yawDelta: Float = 0.0f, var pitchDelta: Float = 0.0f) {
     fun isZero() = pitchDelta != 0.0f && yawDelta != 0.0f
+
+    fun zero() {
+        yawDelta = 0.0f
+        pitchDelta = 0.0f
+    }
 
     companion object {
         fun between(a: Rotation, b: Rotation) = RotationDelta(b.yaw.minus(a.yaw), b.pitch.minus(a.pitch))
@@ -54,9 +60,23 @@ data class PositionDelta(var deltaX: Double = 0.0, var deltaY: Double = 0.0, var
 
     fun distance() = sqrt(distanceSquared())
 
+    fun zero() {
+        deltaX = 0.0
+        deltaY = 0.0
+        deltaZ = 0.0
+    }
+
     companion object {
         fun between(a: Position, b: Position) = PositionDelta(b.x.minus(a.x), b.y.minus(a.y), b.z.minus(a.z))
     }
 }
 
-data class ChunkPosition(val x: Int = 0, val z: Int = 0)
+data class ChunkPosition(val x: Int = 0, val z: Int = 0, val y: Int = 0) {
+    fun getChunkPosition(worldPosition: Position) = Position(worldPosition.x - x * 16, worldPosition.y - y * 16, worldPosition.z - z * 16)
+
+    companion object {
+        fun fromPosition(position: Position): ChunkPosition {
+            return ChunkPosition((position.x / 16).roundToInt(), (position.z / 16).roundToInt(), (position.y / 16).roundToInt())
+        }
+    }
+}

@@ -7,10 +7,13 @@ import net.willemml.hlktmc.minecraft.bot.commands.echo
 import net.willemml.ktcmd.Call
 import net.willemml.ktcmd.CommandManager
 import net.daporkchop.lib.minecraft.text.component.MCTextRoot
+import net.willemml.hlktmc.minecraft.bot.commands.moveX
+import net.willemml.hlktmc.minecraft.bot.commands.moveY
+import net.willemml.hlktmc.minecraft.bot.commands.moveZ
 import java.util.*
 
 class ChatBot(private val botConfig: ChatBotConfig) : BasicClient(botConfig.config) {
-    private val commandManager = CommandManager<ChatMessage>().apply { addCommand(echo) }
+    private val commandManager = CommandManager<ChatMessage>().apply { loadCommands(arrayOf(echo, moveX, moveY, moveZ)) }
 
     override fun onChat(message: String, messageType: MessageType, sender: UUID, rawMessage: MCTextRoot) {
         val usernameRegexStrings = arrayOf("<\\w+> ",  "\\w+ >> ", "[D] \\w+ >> ")
