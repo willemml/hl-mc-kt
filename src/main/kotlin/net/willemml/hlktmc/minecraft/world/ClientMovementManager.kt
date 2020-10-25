@@ -62,8 +62,7 @@ class ClientMovementManager(private val client: Client, private val world: World
             delta.z >= delta.x && delta.z >= delta.y -> delta.z
             else -> delta.y
         } / speed
-        val smallSpeed = (speed / time)
-        val smallDelta = PositionDelta(delta.x / smallSpeed, delta.y / smallSpeed, delta.z / smallSpeed)
+        val smallDelta = PositionDelta(delta.x / speed, delta.y / speed, delta.z / speed)
         GlobalScope.launch {
             val moved = Position()
             while (moved <= final) {
