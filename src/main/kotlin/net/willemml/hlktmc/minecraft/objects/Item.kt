@@ -1,4 +1,8 @@
 package net.willemml.hlktmc.minecraft.objects
 
-class Item {
-}
+data class Item(
+        val id: Int,
+        val displayName: String,
+        val name: String,
+        val stackSize: Int
+)

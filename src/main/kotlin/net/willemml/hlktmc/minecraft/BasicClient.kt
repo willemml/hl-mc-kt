@@ -181,7 +181,7 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
                     parser.parse(it).toRawString()
                 }, ConnectionLogType.DISCONNECTED)
                 joined = false
-                player.positioning.stopped = true
+                player.positioning.stop = true
                 onLeave(event ?: return)
             }
         })

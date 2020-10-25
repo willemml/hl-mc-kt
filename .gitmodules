@@ -1,0 +1,3 @@
+[submodule "src/main/resources/minecraft-data"]
+	path = src/main/resources/minecraft-data
+	url = https://github.com/PrismarineJS/minecraft-data

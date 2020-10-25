@@ -1,8 +1,10 @@
 package net.willemml.hlktmc.minecraft.player
 
-data class Rotation(var yaw: Float = 0.0f, var pitch: Float = 0.0f) {
+import kotlin.math.pow
+
+data class Rotation(var yaw: Float = 0.0f, var pitch: Float = 0.0f) : Comparable<Rotation> {
     fun addDelta(delta: RotationDelta) {
-        addDelta(delta.yawDelta, delta.pitchDelta)
+        addDelta(delta.yaw, delta.pitch)
     }
 
     fun addDelta(yawDelta: Float, pitchDelta: Float) {
@@ -14,14 +16,26 @@ data class Rotation(var yaw: Float = 0.0f, var pitch: Float = 0.0f) {
         this.pitch = pitch
         this.yaw = yaw
     }
+
+    override operator fun compareTo(other: Rotation): Int {
+        val distance = RotationDelta(yaw, pitch).distanceSquared()
+        val distanceOther = RotationDelta(other.yaw, other.pitch).distanceSquared()
+        return when {
+            distance == distanceOther -> 0
+            distance > distanceOther -> 1
+            else -> -1
+        }
+    }
 }
 
-data class RotationDelta(var yawDelta: Float = 0.0f, var pitchDelta: Float = 0.0f) {
-    fun isZero() = pitchDelta != 0.0f && yawDelta != 0.0f
+data class RotationDelta(var yaw: Float = 0.0f, var pitch: Float = 0.0f) {
+    fun isZero() = pitch != 0.0f && yaw != 0.0f
+
+    fun distanceSquared() = yaw.pow(2) + pitch.pow(2)
 
     fun zero() {
-        yawDelta = 0.0f
-        pitchDelta = 0.0f
+        yaw = 0.0f
+        pitch = 0.0f
     }
 
     companion object {
