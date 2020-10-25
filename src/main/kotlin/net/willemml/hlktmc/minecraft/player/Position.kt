@@ -6,10 +6,12 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 
 data class Position(var x: Double = 0.0, var y: Double = 0.0, var z: Double = 0.0) {
+    private var modifying = false
+
     fun addDelta(delta: PositionDelta) {
-        x += delta.deltaX
-        y += delta.deltaY
-        z += delta.deltaZ
+        x += delta.x
+        y += delta.y
+        z += delta.z
     }
 
     fun set(x: Double, y: Double, z: Double) {
@@ -18,20 +20,28 @@ data class Position(var x: Double = 0.0, var y: Double = 0.0, var z: Double = 0.
         this.z = z
     }
 
+    fun set(position: Position) {
+        set(position.x, position.y, position.z)
+    }
+
     fun blockPos() = BlockPos(this.x.toInt(), this.y.toInt(), this.z.toInt())
 
     fun chunkPos() = ChunkPos((x / 16).roundToInt(), (z / 16).roundToInt(), (y / 16).roundToInt())
+
+    override fun equals(other: Any?): Boolean {
+        return if (other is Position) other.x == x && other.y == y && other.z == z else false
+    }
 }
 
-data class PositionDelta(var deltaX: Double = 0.0, var deltaY: Double = 0.0, var deltaZ: Double = 0.0) {
-    fun isZero() = deltaX == 0.0 && deltaY == 0.0 && deltaZ == 0.0
+data class PositionDelta(var x: Double = 0.0, var y: Double = 0.0, var z: Double = 0.0) {
+    fun isZero() = x == 0.0 && y == 0.0 && z == 0.0
 
-    fun distanceSquared() = deltaX.pow(2) + deltaY.pow(2) + deltaZ.pow(2)
+    fun distanceSquared() = x.pow(2) + y.pow(2) + z.pow(2)
 
     fun zero() {
-        deltaX = 0.0
-        deltaY = 0.0
-        deltaZ = 0.0
+        x = 0.0
+        y = 0.0
+        z = 0.0
     }
 
     companion object {
