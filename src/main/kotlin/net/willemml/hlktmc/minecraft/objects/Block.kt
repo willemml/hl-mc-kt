@@ -1,30 +1,35 @@
 package net.willemml.hlktmc.minecraft.objects
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 enum class BoundingBox {
     block,
     empty
 }
 
+@Serializable
 data class State(val name: String, val type: String, val num_values: Int)
 
+@Serializable
 data class Block(
         val id: Int,
         val displayName: String,
         val name: String,
-        val hardness: Float?,
+        val hardness: Float? = null,
         val stackSize: Int,
         val diggable: Boolean,
         val boundingBox: BoundingBox,
-        val material: String?,
-        val harvestTools: HashMap<String, Boolean>?,
-        val states: Array<State>?,
+        val material: String? = null,
+        val harvestTools: HashMap<String, Boolean>? = null,
+        val states: Array<State>? = null,
         val drops: Array<Int>,
         val transparent: Boolean,
         val emitLight: Int,
         val filterLight: Int,
-        val minStateId: Int?,
-        val maxStateId: Int?,
-        val defaultState: Int?
+        val minStateId: Int? = null,
+        val maxStateId: Int? = null,
+        val defaultState: Int? = null
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

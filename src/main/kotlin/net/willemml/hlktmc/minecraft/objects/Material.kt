@@ -1,6 +1,9 @@
 package net.willemml.hlktmc.minecraft.objects
 
-data class Material(val patternProperties: Array<Float>) {
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class Material(val patternProperties: Array<Float>? = null) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

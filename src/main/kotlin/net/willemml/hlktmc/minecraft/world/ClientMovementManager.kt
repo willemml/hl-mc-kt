@@ -33,7 +33,6 @@ class ClientMovementManager(private val client: Client, private val world: World
         stop = false
         GlobalScope.launch {
             while (!stop) {
-                if (!jumping && !onGround()) move(PositionDelta(y = position.y - position.y.toInt()))
                 performMovement()
                 delay(50)
             }
@@ -78,6 +77,7 @@ class ClientMovementManager(private val client: Client, private val world: World
      * @return The time it will take the player to reach the peak in the jump
      */
     fun jump(height: Double = 1.25, speed: Double = 2.0): Long {
+        if (jumping || !onGround()) return 0
         jumping = true
         val time = move(PositionDelta(y = height), speed)
         GlobalScope.launch {
@@ -111,23 +111,26 @@ class ClientMovementManager(private val client: Client, private val world: World
     }
 
     private fun performMovement() {
-        val rotationDelta = if (rotationQueue.size > 0) {
-            rotationQueue[0]
-            rotationQueue.removeAt(0)
-        } else RotationDelta()
-        val positionDelta = if (movementQueue.size > 0) {
-            movementQueue[0]
-            movementQueue.removeAt(0)
-        } else PositionDelta()
-        val newPosition = position.addDelta(positionDelta)
-        val newRotation = rotation.addDelta(rotationDelta)
-        if (world.isSolid(newPosition.blockPos()) || world.isSolid(newPosition.blockPos().copy(y = newPosition.blockPos().y + 1))) positionDelta.zero()
-        else position = newPosition
-        rotation = newRotation
-        when {
-            rotationDelta.isZero() -> client.session.send(ClientPlayerPositionPacket(onGround(), position.x, position.y, position.z))
-            positionDelta.isZero() -> client.session.send(ClientPlayerRotationPacket(onGround(), rotation.yaw, rotation.pitch))
-            else -> client.session.send(ClientPlayerPositionRotationPacket(true, position.x, position.y, position.z, rotation.yaw, rotation.pitch))
+        try {
+            val rotationDelta = if (rotationQueue.size > 0) {
+                rotationQueue[0]
+                rotationQueue.removeAt(0)
+            } else RotationDelta()
+            val positionDelta = if (movementQueue.size > 0) {
+                movementQueue[0]
+                movementQueue.removeAt(0)
+            } else PositionDelta()
+            val newPosition = position.addDelta(positionDelta)
+            val newRotation = rotation.addDelta(rotationDelta)
+            if (world.isSolid(newPosition.blockPos()) || world.isSolid(newPosition.blockPos().copy(y = newPosition.blockPos().y + 1))) positionDelta.zero()
+            else position = newPosition
+            rotation = newRotation
+            when {
+                rotationDelta.isZero() -> client.session.send(ClientPlayerPositionPacket(onGround(), position.x, position.y, position.z))
+                positionDelta.isZero() -> client.session.send(ClientPlayerRotationPacket(onGround(), rotation.yaw, rotation.pitch))
+                else -> client.session.send(ClientPlayerPositionRotationPacket(true, position.x, position.y, position.z, rotation.yaw, rotation.pitch))
+            }
+        } catch (_:NullPointerException) {
         }
     }
 }
