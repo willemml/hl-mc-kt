@@ -3,7 +3,7 @@ package net.willemml.hlktmc.minecraft.player
 import kotlin.math.abs
 import kotlin.math.pow
 
-data class Rotation(var yaw: Float = 0.0f, var pitch: Float = 0.0f) : Comparable<Rotation> {
+data class Rotation(val yaw: Float = 0.0f, val pitch: Float = 0.0f) : Comparable<Rotation> {
     fun addDelta(delta: RotationDelta): Rotation {
         return Rotation(yaw + delta.yaw, pitch + delta.pitch)
     }
