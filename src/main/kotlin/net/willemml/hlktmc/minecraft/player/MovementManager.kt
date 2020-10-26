@@ -114,10 +114,10 @@ class MovementManager(private val client: Client, private val world: WorldManage
     }
 
     /**
-     * Rotates the player by the values given in [delta] at [speed] degrees per second
+     * Rotates the player by the values given in [delta] at [speed] degrees per second, when done [onFinish] will be invoked
      * @return How long it will take to rotate the player
      */
-    fun rotate(delta: RotationDelta, speed: Float = ROTATE_SPEED): Long {
+    fun rotate(delta: RotationDelta, speed: Float = ROTATE_SPEED, onFinish: MovementManager.() -> Unit = {}): Long {
         val final = Rotation().apply { addDelta(delta) } // Desired final orientation
         val time: Float = abs( // Time it will take to rotate
             when {
@@ -134,6 +134,7 @@ class MovementManager(private val client: Client, private val world: WorldManage
                 rotated = rotated.addDelta(smallDelta) // Add the rotation to the progress tracker
                 if (rotated <= final) delay(100) else break
             }
+            onFinish.invoke(this@MovementManager)
         }
         return (time * 1000).toLong()
     }
