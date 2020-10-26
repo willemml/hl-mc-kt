@@ -6,23 +6,11 @@ import kotlin.math.abs
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
-data class Position(var x: Double = 0.0, var y: Double = 0.0, var z: Double = 0.0) : Comparable<Position> {
+data class Position(val x: Double = 0.0, val y: Double = 0.0, val z: Double = 0.0) : Comparable<Position> {
     private var modifying = false
 
-    fun addDelta(delta: PositionDelta) {
-        x += delta.x
-        y += delta.y
-        z += delta.z
-    }
-
-    fun set(x: Double, y: Double, z: Double) {
-        this.x = x
-        this.y = y
-        this.z = z
-    }
-
-    fun set(position: Position) {
-        set(position.x, position.y, position.z)
+    fun addDelta(delta: PositionDelta): Position {
+        return Position(x + delta.x, y + delta.y, z + delta.z)
     }
 
     fun blockPos() = BlockPos(this.x.toInt(), this.y.toInt(), this.z.toInt())
@@ -82,8 +70,14 @@ data class PositionDelta(var x: Double = 0.0, var y: Double = 0.0, var z: Double
 
     override operator fun compareTo(other: PositionDelta): Int {
         if (this == other) return 0
-        val array = arrayListOf(abs(x), abs(y), abs(z)).apply { sort() }
-        val arrayOther = arrayListOf(abs(other.x), abs(other.y), abs(other.z)).apply { sort() }
+        val array = arrayListOf(abs(x), abs(y), abs(z)).apply {
+            sort()
+            reverse()
+        }
+        val arrayOther = arrayListOf(abs(other.x), abs(other.y), abs(other.z)).apply {
+            sort()
+            reverse()
+        }
         return when {
             array[0] > arrayOther[0] -> 1
             array[0] < arrayOther[0] -> -1

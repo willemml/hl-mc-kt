@@ -12,7 +12,6 @@ import net.willemml.hlktmc.minecraft.player.PositionDelta
 import net.willemml.hlktmc.minecraft.player.Rotation
 import net.willemml.hlktmc.minecraft.player.RotationDelta
 import net.willemml.hlktmc.minecraft.world.types.ChunkPos
-import kotlin.math.pow
 
 const val GRAVITY = -0.98 // blocks per second squared
 const val WALK_SPEED = 4.4 // blocks per second
@@ -56,7 +55,7 @@ class ClientMovementManager(private val client: Client, private val world: World
      * @return The time it will take for the player to move there
      */
     fun move(delta: PositionDelta, speed: Double = WALK_SPEED): Long {
-        val final = Position().apply { addDelta(delta) }
+        val final = Position().addDelta(delta)
         val time: Double = when {
             delta.x >= delta.y && delta.x >= delta.z -> delta.x
             delta.z >= delta.x && delta.z >= delta.y -> delta.z
@@ -64,10 +63,10 @@ class ClientMovementManager(private val client: Client, private val world: World
         } / speed
         val smallDelta = PositionDelta(delta.x / speed, delta.y / speed, delta.z / speed)
         GlobalScope.launch {
-            val moved = Position()
+            var moved = Position()
             while (moved <= final) {
                 movementQueue.add(smallDelta)
-                moved.addDelta(smallDelta)
+                moved = moved.addDelta(smallDelta)
                 if (moved <= final) delay(100) else break
             }
         }
@@ -112,7 +111,6 @@ class ClientMovementManager(private val client: Client, private val world: World
     }
 
     private fun performMovement() {
-        val start = position
         val rotationDelta = if (rotationQueue.size > 0) {
             rotationQueue[0]
             rotationQueue.removeAt(0)
@@ -121,12 +119,11 @@ class ClientMovementManager(private val client: Client, private val world: World
             movementQueue[0]
             movementQueue.removeAt(0)
         } else PositionDelta()
-        position.addDelta(positionDelta)
-        rotation.addDelta(rotationDelta)
-        if (world.isSolid(position.blockPos()) || world.isSolid(position.blockPos().copy(y = position.blockPos().y + 1))) {
-            position = start
-            positionDelta.zero()
-        }
+        val newPosition = position.addDelta(positionDelta)
+        val newRotation = rotation.addDelta(rotationDelta)
+        if (world.isSolid(newPosition.blockPos()) || world.isSolid(newPosition.blockPos().copy(y = newPosition.blockPos().y + 1))) positionDelta.zero()
+        else position = newPosition
+        rotation = newRotation
         when {
             rotationDelta.isZero() -> client.session.send(ClientPlayerPositionPacket(onGround(), position.x, position.y, position.z))
             positionDelta.isZero() -> client.session.send(ClientPlayerRotationPacket(onGround(), rotation.yaw, rotation.pitch))

@@ -4,18 +4,8 @@ import kotlin.math.abs
 import kotlin.math.pow
 
 data class Rotation(var yaw: Float = 0.0f, var pitch: Float = 0.0f) : Comparable<Rotation> {
-    fun addDelta(delta: RotationDelta) {
-        addDelta(delta.yaw, delta.pitch)
-    }
-
-    fun addDelta(yawDelta: Float, pitchDelta: Float) {
-        pitch += pitchDelta
-        yaw += yawDelta
-    }
-
-    fun set(pitch: Float, yaw: Float) {
-        this.pitch = pitch
-        this.yaw = yaw
+    fun addDelta(delta: RotationDelta): Rotation {
+        return Rotation(yaw + delta.yaw, pitch + delta.pitch)
     }
 
     override operator fun compareTo(other: Rotation): Int {
@@ -59,8 +49,14 @@ data class RotationDelta(var yaw: Float = 0.0f, var pitch: Float = 0.0f) : Compa
 
     override operator fun compareTo(other: RotationDelta): Int {
         if (this == other) return 0
-        val array = arrayListOf(abs(yaw), abs(pitch)).apply { sort() }
-        val arrayOther = arrayListOf(abs(other.yaw), abs(other.pitch)).apply { sort() }
+        val array = arrayListOf(abs(yaw), abs(pitch)).apply {
+            sort()
+            reverse()
+        }
+        val arrayOther = arrayListOf(abs(other.yaw), abs(other.pitch)).apply {
+            sort()
+            reverse()
+        }
         return when {
             array[0] > arrayOther[0] -> 1
             array[0] < arrayOther[0] -> -1

@@ -92,16 +92,18 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
                     }
                     is ServerPlayerPositionRotationPacket -> {
                         val packet = event.getPacket<ServerPlayerPositionRotationPacket>()
-                        if (packet.relative.contains(PositionElement.X)) player.positioning.position.x += packet.x
-                        else player.positioning.position.x = packet.x
-                        if (packet.relative.contains(PositionElement.Y)) player.positioning.position.y += packet.y
-                        else player.positioning.position.y = packet.y
-                        if (packet.relative.contains(PositionElement.Z)) player.positioning.position.z += packet.z
-                        else player.positioning.position.z = packet.z
-                        if (packet.relative.contains(PositionElement.YAW)) player.positioning.rotation.yaw += packet.yaw
-                        else player.positioning.rotation.yaw = packet.yaw
-                        if (packet.relative.contains(PositionElement.PITCH)) player.positioning.rotation.pitch += packet.pitch
-                        else player.positioning.rotation.pitch = packet.pitch
+                        val deltaX = if (packet.relative.contains(PositionElement.X)) packet.x
+                        else packet.x - player.positioning.position.x
+                        val deltaY = if (packet.relative.contains(PositionElement.Y)) packet.y
+                        else packet.y - player.positioning.position.y
+                        val deltaZ = if (packet.relative.contains(PositionElement.Z)) packet.z
+                        else packet.z - player.positioning.position.z
+                        val deltaYaw = if (packet.relative.contains(PositionElement.YAW)) packet.yaw
+                        else packet.yaw - player.positioning.rotation.yaw
+                        val deltaPitch = if (packet.relative.contains(PositionElement.PITCH)) packet.pitch
+                        else packet.pitch - player.positioning.rotation.pitch
+                        player.positioning.position = player.positioning.position.addDelta(PositionDelta(deltaX, deltaY, deltaZ))
+                        player.positioning.rotation = player.positioning.rotation.addDelta(RotationDelta(deltaYaw, deltaPitch))
                         client.session.send(ClientTeleportConfirmPacket(packet.teleportId))
                     }
                     is ServerPlayerHealthPacket -> {
@@ -123,14 +125,14 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
                     is ServerEntityTeleportPacket -> {
                         val packet = event.getPacket<ServerEntityTeleportPacket>()
                         if (packet.entityId == player.entityID) {
-                            player.positioning.position.set(Position(packet.x, packet.y, packet.z))
+                            player.positioning.position = Position(packet.x, packet.y, packet.z)
                             player.positioning.rotation = Rotation(packet.yaw, packet.pitch)
                         }
                     }
                     is ServerEntityPositionPacket -> {
                         val packet = event.getPacket<ServerEntityPositionPacket>()
                         if (packet.entityId == player.entityID) {
-                            player.positioning.position.addDelta(PositionDelta(
+                            player.positioning.position = player.positioning.position.addDelta(PositionDelta(
                                     packet.moveX / (128 * 32),
                                     packet.moveX / (128 * 32),
                                     packet.moveX / (128 * 32)
@@ -140,18 +142,18 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
                     is ServerEntityRotationPacket -> {
                         val packet = event.getPacket<ServerEntityRotationPacket>()
                         if (packet.entityId == player.entityID) {
-                            player.positioning.rotation.set(packet.yaw, packet.pitch)
+                            player.positioning.rotation = Rotation(packet.yaw, packet.pitch)
                         }
                     }
                     is ServerEntityPositionRotationPacket -> {
                         val packet = event.getPacket<ServerEntityPositionRotationPacket>()
                         if (packet.entityId == player.entityID) {
-                            player.positioning.position.addDelta(PositionDelta(
+                            player.positioning.position = player.positioning.position.addDelta(PositionDelta(
                                     packet.moveX / (128 * 32),
                                     packet.moveX / (128 * 32),
                                     packet.moveX / (128 * 32)
                             ))
-                            player.positioning.rotation.set(packet.yaw, packet.pitch)
+                            player.positioning.rotation = Rotation(packet.yaw, packet.pitch)
                         }
                         player.positioning.rotation
                     }
