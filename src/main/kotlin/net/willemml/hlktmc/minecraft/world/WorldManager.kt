@@ -19,7 +19,7 @@ class WorldManager {
 
     fun isSolid(position: BlockPos): Boolean {
         return try {
-            (ResourceManager.blocks[getBlockId(position)] ?: return true).boundingBox == BoundingBox.block
+            getBlock(position).boundingBox == BoundingBox.block
         } catch (_: IndexOutOfBoundsException) {
             true
         }
