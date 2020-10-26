@@ -8,3 +8,4 @@ Uses [kt-cmd](https://github.com/willemml/kt-cmd) for the command system.
  - Steveice10's [MCProtocolLib](https://github.com/Steveice10/MCProtocolLib) for saving me lots of time.
  - Tea-Ayataka's [Kordis](https://github.com/Tea-Ayataka/Kordis) for making it easy to interact with the Discord API.
  - PorkStudios' [PorkLib](https://github.com/PorkStudios/PorkLib) for Minecraft text parsing.
+ - PrismarineJS' [minecraft-data](https://github.com/PrismarineJS/minecraft-data) for easy to access block and item definitions.
