@@ -1,7 +1,7 @@
 import net.willemml.hlktmc.cli.CLI
 import net.willemml.hlktmc.discord.DiscordBotManager
 import net.willemml.hlktmc.minecraft.bot.ChatBotManager
-import net.willemml.hlktmc.minecraft.objects.ResourceManager
+import net.willemml.hlktmc.minecraft.ResourceManager
 import java.io.IOException
 
 val chatBotManager = ChatBotManager("config/minecraft-bots.json")

@@ -1,8 +1,11 @@
-package net.willemml.hlktmc.minecraft.objects
+package net.willemml.hlktmc.minecraft
 
 import com.github.steveice10.mc.protocol.MinecraftConstants
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import net.willemml.hlktmc.minecraft.objects.Block
+import net.willemml.hlktmc.minecraft.objects.Item
+import net.willemml.hlktmc.minecraft.objects.Material
 import java.io.File
 
 object ResourceManager {

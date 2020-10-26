@@ -1,4 +1,4 @@
-package net.willemml.hlktmc.minecraft.world
+package net.willemml.hlktmc.minecraft.player
 
 import com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerPositionPacket
 import com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerPositionRotationPacket
@@ -7,11 +7,9 @@ import com.github.steveice10.packetlib.Client
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import net.willemml.hlktmc.minecraft.player.Position
-import net.willemml.hlktmc.minecraft.player.PositionDelta
-import net.willemml.hlktmc.minecraft.player.Rotation
-import net.willemml.hlktmc.minecraft.player.RotationDelta
+import net.willemml.hlktmc.minecraft.world.WorldManager
 import net.willemml.hlktmc.minecraft.world.types.ChunkPos
+import kotlin.math.abs
 
 const val GRAVITY = -0.98 // Y Acceleration of the player when not on ground (blocks per second per second)
 const val WALK_SPEED = 4.4 // Normal Minecraft player walking speed (blocks per second)
@@ -22,7 +20,7 @@ const val ROTATE_SPEED = 90.0f // How fast the player should usually rotate (deg
 /**
  * Manages movement of the player attached to [client], uses [world] as a reference for checking whether a position is valid.
  */
-class ClientMovementManager(private val client: Client, private val world: WorldManager) {
+class MovementManager(private val client: Client, private val world: WorldManager) {
     private val movementQueue = ArrayList<PositionDelta>() // Queued movements
     private val rotationQueue = ArrayList<RotationDelta>() // Queued rotations
     private var jumping = false // Whether or not the player is jumping
@@ -67,22 +65,27 @@ class ClientMovementManager(private val client: Client, private val world: World
      */
     fun onGround(): Boolean {
         val yDecimal = position.y - position.y.toInt() // Get the decimal part of the player's Y coordinate
-        val isBlockUnderSolid = world.isSolid(position.copy(y = position.y.minus(1)).blockPos()) // Check if the block under the player is solid
+        val isBlockUnderSolid = world.isSolid(
+            position.copy(y = position.y.minus(1)).blockPos()
+        ) // Check if the block under the player is solid
         return yDecimal != 0.0 || !isBlockUnderSolid
     }
 
     /**
-     * Moves the player by [delta] at [speed] blocks per second
+     * Moves the player by [delta] at [speed] blocks per second, when done [onFinish] will be invoked
      * @return The time it will take for the player to move there
      */
-    fun move(delta: PositionDelta, speed: Double = WALK_SPEED): Long {
+    fun move(delta: PositionDelta, speed: Double = WALK_SPEED, onFinish: MovementManager.() -> Unit = {}): Long {
         val final = Position().addDelta(delta) // Desired final position
-        val time: Double = when { // Time it will take to move
-            delta.x >= delta.y && delta.x >= delta.z -> delta.x
-            delta.z >= delta.x && delta.z >= delta.y -> delta.z
-            else -> delta.y
-        } / speed
-        val smallDelta = PositionDelta(delta.x / speed / 10, delta.y / speed / 10, delta.z / speed / 10) // How much to move every 100ms
+        val time: Double = abs( // Time it will take to move
+            when {
+                delta.x >= delta.y && delta.x >= delta.z -> delta.x
+                delta.z >= delta.x && delta.z >= delta.y -> delta.z
+                else -> delta.y
+            }
+        ) / abs(speed)
+        val smallDelta =
+            PositionDelta(delta.x / speed, delta.y / speed, delta.z / speed) // How much to move every 100ms
         GlobalScope.launch {
             var moved = Position() // Empty position to track progress
             while (moved <= final) { // Move in small increments until the desired position has been reached
@@ -90,6 +93,7 @@ class ClientMovementManager(private val client: Client, private val world: World
                 moved = moved.addDelta(smallDelta) // Add the movement to the progress tracker
                 if (moved <= final) delay(100) else break
             }
+            onFinish.invoke(this@MovementManager)
         }
         return (time * 1000).toLong()
     }
@@ -115,11 +119,14 @@ class ClientMovementManager(private val client: Client, private val world: World
      */
     fun rotate(delta: RotationDelta, speed: Float = ROTATE_SPEED): Long {
         val final = Rotation().apply { addDelta(delta) } // Desired final orientation
-        val time: Float = when { // Time it will take to rotate
-            delta.yaw > delta.pitch -> delta.yaw
-            else -> delta.pitch
-        } / speed
-        val smallDelta = RotationDelta(delta.yaw / speed / 10, delta.pitch / speed / 10) // How much to rotate every 100ms
+        val time: Float = abs( // Time it will take to rotate
+            when {
+                delta.yaw > delta.pitch -> delta.yaw
+                else -> delta.pitch
+            }
+        ) / abs(speed)
+        val smallDelta =
+            RotationDelta(delta.yaw / speed / 10, delta.pitch / speed / 10) // How much to rotate every 100ms
         GlobalScope.launch {
             var rotated = Rotation() // Create an empty rotation, used to track progress
             while (rotated <= final) { // Keep rotating in small increments until the desired orientation has been reached
@@ -146,15 +153,40 @@ class ClientMovementManager(private val client: Client, private val world: World
             } else PositionDelta()
             val newPosition = position.addDelta(positionDelta) // Get the position this movement would result in
             val newRotation = rotation.addDelta(rotationDelta)
-            if (world.isSolid(newPosition.blockPos()) || world.isSolid(newPosition.blockPos().copy(y = newPosition.blockPos().y + 1))) positionDelta.zero() // Check that this movement would not put the player in a block
+            if (world.isSolid(newPosition.blockPos()) || world.isSolid(
+                    newPosition.blockPos().copy(y = newPosition.blockPos().y + 1)
+                )
+            ) positionDelta.zero() // Check that this movement would not put the player in a block
             else position = newPosition
             rotation = newRotation
             when { // Send the new position and or rotation to the server
-                rotationDelta.isZero() -> client.session.send(ClientPlayerPositionPacket(onGround(), position.x, position.y, position.z))
-                positionDelta.isZero() -> client.session.send(ClientPlayerRotationPacket(onGround(), rotation.yaw, rotation.pitch))
-                else -> client.session.send(ClientPlayerPositionRotationPacket(true, position.x, position.y, position.z, rotation.yaw, rotation.pitch))
+                rotationDelta.isZero() -> client.session.send(
+                    ClientPlayerPositionPacket(
+                        onGround(),
+                        position.x,
+                        position.y,
+                        position.z
+                    )
+                )
+                positionDelta.isZero() -> client.session.send(
+                    ClientPlayerRotationPacket(
+                        onGround(),
+                        rotation.yaw,
+                        rotation.pitch
+                    )
+                )
+                else -> client.session.send(
+                    ClientPlayerPositionRotationPacket(
+                        true,
+                        position.x,
+                        position.y,
+                        position.z,
+                        rotation.yaw,
+                        rotation.pitch
+                    )
+                )
             }
-        } catch (_:NullPointerException) {
+        } catch (_: NullPointerException) {
         } // NullPointerExceptions can occur here for some reason, catching them so that they are ignored
     }
 }
