@@ -114,6 +114,16 @@ class MovementManager(private val client: Client, private val world: WorldManage
     }
 
     /**
+     * Makes the player go to [position] at [speed] blocks per second
+     */
+    fun moveTo(position: Position, speed: Double = WALK_SPEED) = move(PositionDelta.from(this.position, position), speed)
+
+    /**
+     * Makes the player look at [rotation] rotating at [speed] degrees per second
+     */
+    fun rotateTo(rotation: Rotation, speed: Float = ROTATE_SPEED) = rotate(RotationDelta.from(this.rotation,  rotation), speed)
+
+    /**
      * Rotates the player by the values given in [delta] at [speed] degrees per second, when done [onFinish] will be invoked
      * @return How long it will take to rotate the player
      */

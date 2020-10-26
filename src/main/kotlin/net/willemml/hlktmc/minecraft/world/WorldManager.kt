@@ -1,8 +1,10 @@
 package net.willemml.hlktmc.minecraft.world
 
 import com.github.steveice10.mc.protocol.data.game.chunk.Column
+import net.willemml.hlktmc.minecraft.AIR_BLOCK
 import net.willemml.hlktmc.minecraft.objects.BoundingBox
 import net.willemml.hlktmc.minecraft.ResourceManager
+import net.willemml.hlktmc.minecraft.objects.Block
 import net.willemml.hlktmc.minecraft.world.types.BlockPos
 import net.willemml.hlktmc.minecraft.world.types.ChunkPos
 
@@ -11,13 +13,13 @@ class WorldManager {
 
     private fun getChunk(position: ChunkPos) = columns[position.copy(y = 0)]?.chunks?.get(position.y)
 
-    fun getBlock(position: BlockPos): Int {
-        return getChunk(position.chunkPos())?.get(position.x, position.y, position.z) ?: 0
-    }
+    fun getBlockId(position: BlockPos) = getChunk(position.chunkPos())?.get(position.x, position.y, position.z) ?: 0
+
+    fun getBlock(position: BlockPos) = ResourceManager.blocks[getBlockId(position)]?: AIR_BLOCK
 
     fun isSolid(position: BlockPos): Boolean {
         return try {
-            (ResourceManager.blocks[getBlock(position)] ?: return true).boundingBox == BoundingBox.block
+            (ResourceManager.blocks[getBlockId(position)] ?: return true).boundingBox == BoundingBox.block
         } catch (_: IndexOutOfBoundsException) {
             true
         }
