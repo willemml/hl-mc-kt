@@ -37,15 +37,10 @@ data class Rotation(val yaw: Float = 0.0f, val pitch: Float = 0.0f) : Comparable
     }
 }
 
-data class RotationDelta(var yaw: Float = 0.0f, var pitch: Float = 0.0f) : Comparable<RotationDelta> {
+data class RotationDelta(val yaw: Float = 0.0f, val pitch: Float = 0.0f) : Comparable<RotationDelta> {
     fun isZero() = pitch != 0.0f && yaw != 0.0f
 
     fun distanceSquared() = yaw.pow(2) + pitch.pow(2)
-
-    fun zero() {
-        yaw = 0.0f
-        pitch = 0.0f
-    }
 
     override operator fun compareTo(other: RotationDelta): Int {
         if (this == other) return 0

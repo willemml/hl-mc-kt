@@ -50,7 +50,7 @@ data class Position(val x: Double = 0.0, val y: Double = 0.0, val z: Double = 0.
     }
 }
 
-data class PositionDelta(var x: Double = 0.0, var y: Double = 0.0, var z: Double = 0.0) : Comparable<PositionDelta> {
+data class PositionDelta(val x: Double = 0.0, val y: Double = 0.0, val z: Double = 0.0) : Comparable<PositionDelta> {
     fun isZero() = x == 0.0 && y == 0.0 && z == 0.0
 
     fun distanceSquared(): Double {
@@ -60,12 +60,6 @@ data class PositionDelta(var x: Double = 0.0, var y: Double = 0.0, var z: Double
             z == 0.0 && y == 0.0 -> x
             else -> x.pow(2) + y.pow(2) + z.pow(2)
         }
-    }
-
-    fun zero() {
-        x = 0.0
-        y = 0.0
-        z = 0.0
     }
 
     override operator fun compareTo(other: PositionDelta): Int {

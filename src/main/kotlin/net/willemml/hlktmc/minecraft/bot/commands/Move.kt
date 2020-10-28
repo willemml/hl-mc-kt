@@ -29,9 +29,9 @@ val moveY = Command<ChatMessage>("y", "Move on the Y axis.", arrayListOf(), true
 val moveTo = Command<ChatMessage>("move", "Move the player.", arrayListOf(), true) {
     it.client.player.positioning.moveTo(Position(getArgument("x"), getArgument("y"), getArgument("z")))
 }.apply {
-    float("x", true, "What x coordinate to go to")
-    float("y", true, "What y coordinate to go to")
-    float("z", true, "What z coordinate to go to")
+    double("x", true, "What x coordinate to go to")
+    double("y", true, "What y coordinate to go to")
+    double("z", true, "What z coordinate to go to")
 }
 
 val rotateTo = Command<ChatMessage>("rotate", "Rotate the player.", arrayListOf(), true) {
