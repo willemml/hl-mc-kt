@@ -3,7 +3,7 @@
 
 This is a headless client for vanilla Minecraft servers, it is written in Kotlin and has support for movement and chat. This project can be use both as a library and a standalone application.
 
-My other project, [kt-cmd](https://github.com/willemml/kt-cmd) is used managing and parsing commands.
+My other project, [kt-cmd](https://github.com/willemml/kt-cmd) is used for the managing and parsing of commands.
 
 ### Building:
 Clone the repo and enter its directory:
