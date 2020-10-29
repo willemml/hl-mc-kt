@@ -4,11 +4,10 @@ import chatBotManager
 import net.willemml.hlktmc.cli.CLIMessage
 import net.willemml.ktcmd.Command
 
-val sendFromMinecraftBot = Command<CLIMessage>("sendmc", "Sends a message from a Minecraft bot instance.", arrayListOf("m", "sm", "smc"), true) {
-    val name = getArgument<String>("botname")
-    val bot = chatBotManager.bots[name]
+val sendFromMinecraftBot = Command<CLIMessage>("send", "Sends a message from a Minecraft bot instance.", arrayListOf("s"), true) {
+    val bot = chatBotManager.bots[getArgument("botname")]
     if (bot == null) {
-        it.error("No connected Minecraft instance with name $name")
+        it.error("No connected Minecraft instance with that name.")
         return@Command
     }
     bot.sendMessage(getArgument("message"))

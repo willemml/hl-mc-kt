@@ -26,7 +26,6 @@ dependencies {
     implementation("io.ktor:ktor-client-apache:1.4.0")
     implementation("io.ktor:ktor-client-jackson:1.4.0")
     implementation("io.ktor:ktor-client-logging:1.4.0")
-    implementation("com.github.Tea-Ayataka:Kordis:0.2.3")
     implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.2")
     implementation("com.github.Steveice10:MCProtocolLib:976c2d0f89")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")

@@ -3,13 +3,17 @@ package net.willemml.hlktmc.cli.commands
 import chatBotManager
 import net.willemml.hlktmc.cli.CLIMessage
 import net.willemml.ktcmd.Command
-import discordBotManager
 import net.willemml.hlktmc.ChatBotConfig
 import net.willemml.hlktmc.ClientConfig
-import net.willemml.hlktmc.DiscordConfig
 import net.willemml.hlktmc.randomAlphanumeric
 
-val launchMinecraftBot = Command<CLIMessage>("launchcb", "Launches an instance of Minecraft chat bot.", arrayListOf("lcb", "lc", "lmc")) {
+val launchAll = Command<CLIMessage>("launchall", "Launches all Minecraft bots.", arrayListOf("la")) {
+    chatBotManager.startAll(getArgument("delay"))
+}.apply {
+    long("delay", false, "How long to wait between connecting each bot.", "d", 0)
+}
+
+val launchMinecraftBot = Command<CLIMessage>("launch", "Launches an instance of Minecraft chat bot.", arrayListOf("l")) {
     val name = getArgument<String>("name")
     val username = getOptionalArgument<String>("username")
     val config = ChatBotConfig(ClientConfig(
@@ -35,28 +39,4 @@ val launchMinecraftBot = Command<CLIMessage>("launchcb", "Launches an instance o
     boolean("log_chat", false, "Whether or not to log chat messages to console", "cl", false)
     boolean("overwrite", false, "Whether or not to overwrite existing bots of the same name", "o", true)
     boolean("start", false, "Whether or not to start the bot immediately", "s", true)
-}
-
-val launchDiscordBot = Command<CLIMessage>("launchdb", "Launches an instance of the Discord bot.", arrayListOf("ldb", "ld")) {
-    val name = getArgument<String>("name")
-    val config = DiscordConfig(
-            getArgument("token"),
-            getOptionalArgument("prefix")
-    )
-    discordBotManager.add(name, config, getOptionalArgument("overwrite"))
-    if (getOptionalArgument("start")) discordBotManager.start(name)
-}.apply {
-    string("name", true, "Name of the Discord bot instance", "n")
-    string("token", true, "Discord bot token to use", "t")
-    string("prefix", false, "Prefix to listen for commands with", "p", "!")
-    boolean("start", false, "Whether or not to start the bot immediately", "s", true)
-}
-
-val launchAllBots = Command<CLIMessage>("launchbots", "Launches all bots from config file.", arrayListOf("lb")) {
-    if (getOptionalArgument("minecraft")) chatBotManager.startAll(2000)
-    if (getOptionalArgument("discord")) discordBotManager.startAll()
-}.apply {
-    boolean("discord", false, "Whether or not to start all Discord bots, defaults to true", "d", true)
-    boolean("overwrite", false, "Whether or not to overwrite existing bots of the same name", "o", true)
-    boolean("minecraft", false, "Whether or not to start all Minecraft bots, defaults to true", "m", true)
 }

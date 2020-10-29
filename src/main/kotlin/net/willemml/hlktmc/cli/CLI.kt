@@ -3,16 +3,14 @@ package net.willemml.hlktmc.cli
 import net.willemml.hlktmc.cli.commands.*
 import net.willemml.ktcmd.Call
 import net.willemml.ktcmd.CommandManager
-import net.willemml.hlktmc.cli.commands.*
 
 class CLI {
     private val commandManager = CommandManager<CLIMessage>().apply {
         loadCommands(
             listOf(
                 connectBot,
-                launchAllBots,
+                launchAll,
                 launchMinecraftBot,
-                launchDiscordBot,
                 listBots,
                 removeBot,
                 sendFromMinecraftBot
@@ -21,7 +19,7 @@ class CLI {
     }
 
     init {
-        println(commandManager.listCommands())
+        println("Type help for a list of commands.")
         while (true) {
             print("hl-mc-kt > ")
             val commandString = readLine()

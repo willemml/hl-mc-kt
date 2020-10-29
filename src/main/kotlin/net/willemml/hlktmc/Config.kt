@@ -31,9 +31,6 @@ data class ChatBotConfig(
         var prefix: String = "!"
 )
 
-@Serializable
-class DiscordConfig(val token: String = "", val prefix: String = "!")
-
 fun randomAlphanumeric(length: Int): String {
     return (1..length).map { alphanumeric[Random.nextInt(0, alphanumeric.length)] }.joinToString("")
 }
