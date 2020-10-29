@@ -16,13 +16,13 @@ data class ClientConfig(
         var username: String = randomAlphanumeric(16),
         var password: String = "",
         var chunkUnloadDistance: Int = 2, // chunks that are further from the player than this are unloaded or not loaded
+        var logConnection: Boolean = true,
+        var logRespawns: Boolean = true,
+        var logChat: Boolean = true,
         var visibleParts: List<SkinPart> = listOf(SkinPart.CAPE, SkinPart.HAT, SkinPart.JACKET, SkinPart.LEFT_PANTS_LEG, SkinPart.LEFT_SLEEVE, SkinPart.RIGHT_PANTS_LEG, SkinPart.RIGHT_SLEEVE),
         var preferredHand: HandPreference = HandPreference.RIGHT_HAND,
         var chatVisibility: ChatVisibility = ChatVisibility.FULL,
-        var locale: String = "en_US",
-        var logConnection: Boolean = true,
-        var logRespawns: Boolean = true,
-        var logChat: Boolean = true
+        var locale: String = "en_US"
 )
 
 @Serializable

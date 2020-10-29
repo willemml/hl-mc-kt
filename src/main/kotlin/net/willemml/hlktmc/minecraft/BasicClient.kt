@@ -44,7 +44,10 @@ import kotlin.collections.HashMap
 
 open class BasicClient(val config: ClientConfig = ClientConfig()) {
     private val protocol: MinecraftProtocol =
-        if (config.password.isEmpty()) MinecraftProtocol(config.username) else MinecraftProtocol(
+        if (config.password.isEmpty()) {
+            println("No password")
+            MinecraftProtocol(config.username)
+        } else MinecraftProtocol(
             config.username,
             config.password
         )
@@ -197,6 +200,7 @@ open class BasicClient(val config: ClientConfig = ClientConfig()) {
                 if (config.logConnection) connectionLog(event?.reason ?: "".let {
                     parser.parse(it).toRawString()
                 }, ConnectionLogType.DISCONNECTED)
+                println("${protocol.profile}, ${protocol.profile.name}")
                 joined = false
                 player.positioning.stop = true
                 onLeave(event ?: return)
